@@ -109,6 +109,42 @@ body.touring .wrap{padding-bottom:320px}
 .verbs b{display:block;color:var(--accent);font-size:15px;margin-bottom:2px}
 @media (max-width:520px){.verbs{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media (prefers-reduced-motion:no-preference){.tour{animation:tourin .18s ease-out}@keyframes tourin{from{transform:translateY(8px);opacity:.6}to{transform:none;opacity:1}}}
+figure.fig{margin:16px 0}
+.fig figcaption{font-size:13px;color:var(--muted);margin-top:8px;max-width:84ch}
+.dia{overflow-x:auto;background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:14px}
+.dia svg{display:block;width:100%;min-width:700px;height:auto;font-family:var(--f-ui)}
+.d-box{fill:var(--bg);stroke:var(--line);stroke-width:1.5}
+.d-none{fill:none;stroke:var(--muted);stroke-width:1.5;stroke-dasharray:4 4}
+.d-pick{fill:var(--accent-soft);stroke:var(--accent);stroke-width:1.5}
+.d-t{fill:var(--ink);font-size:13px;font-weight:600} .d-s{fill:var(--muted);font-size:11.5px} .d-b{fill:var(--ink);font-size:12px}
+.d-pt{fill:var(--accent);font-size:13px;font-weight:600} .d-ps{fill:var(--accent);font-size:11.5px}
+.d-l{stroke:var(--muted);stroke-width:1.5;fill:none} .d-dash{stroke:var(--muted);stroke-width:1.5;fill:none;stroke-dasharray:4 4}
+.d-x{stroke:var(--crit);stroke-width:1.5;fill:none} .d-xt{fill:var(--crit);font-size:12px;font-weight:500}
+.d-ah{fill:var(--muted)} .d-bad{fill:var(--crit-soft)} .d-good{fill:var(--good-soft)} .d-sunk{fill:var(--sunk)}
+details.more{margin:10px 0 0} details.more>summary{cursor:pointer;color:var(--accent);font-size:13px;font-weight:500;padding:4px 0}
+.vs{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.2fr);gap:8px 20px;align-items:center;padding:12px 0;border-top:1px solid var(--line);max-width:100ch}
+.vs p{margin:0}
+.pair{display:flex;align-items:center;gap:6px}
+.pair i{flex:1 1 16px;min-width:16px;border-top:2px dashed var(--crit);height:0}
+.pair .chip{white-space:normal;text-align:center}
+@media (max-width:700px){.vs{grid-template-columns:minmax(0,1fr)}}
+.chain{display:flex;flex-wrap:wrap;gap:8px;align-items:stretch;margin:14px 0}
+.chain>div{flex:1 1 160px;background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:10px 12px;min-width:0;font-size:13.5px;display:flex;flex-direction:column;gap:5px;align-items:flex-start}
+.chain>div.star{background:var(--mark);color:var(--mark-ink);border-color:transparent}
+.chain>div.gate{border-style:dashed;border-color:var(--crit)}
+.chain .k{font:500 11px var(--f-mono);letter-spacing:.06em;text-transform:uppercase;opacity:.75}
+.stack{display:flex;height:36px;border-radius:6px;overflow:hidden;margin:12px 0 6px;max-width:84ch;font:500 12px var(--f-mono)}
+.stack>span{display:grid;place-items:center;min-width:0;white-space:nowrap;overflow:hidden;color:var(--bg)}
+.stack>span:nth-child(1){background:var(--accent);color:var(--accent-ink)} .stack>span:nth-child(2){background:var(--ink)} .stack>span:nth-child(3){background:var(--muted)}
+.frac{display:inline-grid;text-align:center;font:500 15px/1.4 var(--f-ui);background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:14px 18px;margin:8px 0 14px;max-width:100%}
+.frac>span:first-child{border-bottom:2px solid var(--ink);padding-bottom:6px}
+.frac>span:last-child{padding-top:6px;color:var(--muted)}
+.meter{position:relative;height:14px;border-radius:7px;background:var(--sunk);max-width:84ch;margin:30px 0 34px}
+.meter>i{position:absolute;top:0;bottom:0;left:0;border-radius:7px}
+.meter>b{position:absolute;top:-22px;transform:translateX(-50%);font:500 12px var(--f-mono);white-space:nowrap}
+.meter>em{position:absolute;top:18px;transform:translateX(-50%);font-style:normal;font-size:12px;color:var(--muted);white-space:nowrap}
+.tile b{font-weight:600}
+.tile>.chip{align-self:flex-start}
 .note{background:var(--accent-soft);padding:8px 12px;border-radius:6px;font-size:13px;max-width:80ch}
 .warnp{color:var(--warn)}
 .thinking{color:var(--muted);font-style:italic}
@@ -286,7 +322,7 @@ mark.hl.on{outline:2px solid var(--accent);outline-offset:1px}
 <template id="tpl-why">
   <p class="desk">1 &#183; Why this stage</p>
   <h1>The damage in the brief happens after signature, so that is where I built.</h1>
-  <p class="lede">I chose the intelligent repository. The brief names three results of the current mess: unreviewed auto-renewals, missed service levels, and invoices that do not match agreed prices. Each one is a failure to use a contract that is already signed.</p>
+  <p class="lede">I chose the intelligent repository. Each of the three losses the brief names is a failure to use a contract that is already signed.</p>
   <div class="headline-box"><p class="hl-line">Filing three signed documents that sat outside the repository raises the amount flagged on the sample's five invoices from $8,810.52 to $28,561.92, about 5.7% of the $502,751.56 billed.</p><p class="sub">Flagged means billed above the agreed rate or cap, or a service credit the contract gives that the invoice leaves out. All figures come from invented sample data.</p></div>
   <div class="pos">
     <h3>Three positions this prototype takes</h3>
@@ -299,7 +335,26 @@ mark.hl.on{outline:2px solid var(--accent);outline-offset:1px}
   </div>
   <div class="bar"><button class="btn" data-act="go" data-r="start">Open the guided five-step path</button><button class="btn" data-act="go" data-r="stakeholders">Continue to the stakeholder map</button></div>
 
-  <h2>What each stage can and cannot fix</h2>
+  <figure class="fig">
+    <div class="dia"><svg viewBox="0 0 1000 230" role="img" aria-label="The contract lifecycle. Intake and negotiation come before signature and only improve new contracts. Both depend on the repository. The repository comes after signature, covers all 4,000 signed contracts, and is where the brief's three losses happen: unreviewed renewals, missed service levels and invoices over the agreed price.">
+      <defs><marker id="a-why" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" class="d-ah"/></marker></defs>
+      <rect class="d-box" x="20" y="30" width="200" height="64" rx="6"/><text class="d-t" x="120" y="57" text-anchor="middle">1 &#183; Contract intake</text><text class="d-s" x="120" y="77" text-anchor="middle">new requests only</text>
+      <line class="d-l" x1="220" y1="62" x2="268" y2="62" marker-end="url(#a-why)"/>
+      <rect class="d-box" x="270" y="30" width="200" height="64" rx="6"/><text class="d-t" x="370" y="57" text-anchor="middle">2 &#183; Negotiation</text><text class="d-s" x="370" y="77" text-anchor="middle">new deals only</text>
+      <line class="d-l" x1="470" y1="62" x2="538" y2="62" marker-end="url(#a-why)"/>
+      <line class="d-dash" x1="505" y1="18" x2="505" y2="108"/><text class="d-s" x="505" y="12" text-anchor="middle">signature</text>
+      <rect class="d-pick" x="540" y="30" width="440" height="64" rx="6"/><text class="d-pt" x="760" y="57" text-anchor="middle">3 &#183; Intelligent repository (chosen)</text><text class="d-ps" x="760" y="77" text-anchor="middle">every contract already signed, about 4,000</text>
+      <text class="d-s" x="120" y="118" text-anchor="middle">depends on stage 3 to know</text><text class="d-s" x="120" y="134" text-anchor="middle">what is already signed</text>
+      <text class="d-s" x="370" y="118" text-anchor="middle">depends on stage 3 to know</text><text class="d-s" x="370" y="134" text-anchor="middle">what was agreed last time</text>
+      <line class="d-x" x1="610" y1="94" x2="610" y2="140"/><line class="d-x" x1="760" y1="94" x2="760" y2="140"/><line class="d-x" x1="910" y1="94" x2="910" y2="140"/>
+      <rect class="d-bad" x="540" y="140" width="140" height="40" rx="6"/><text class="d-xt" x="610" y="165" text-anchor="middle">unreviewed renewals</text>
+      <rect class="d-bad" x="690" y="140" width="140" height="40" rx="6"/><text class="d-xt" x="760" y="165" text-anchor="middle">missed service levels</text>
+      <rect class="d-bad" x="840" y="140" width="140" height="40" rx="6"/><text class="d-xt" x="910" y="165" text-anchor="middle">invoices over price</text>
+      <text class="d-s" x="760" y="206" text-anchor="middle">the three losses named in the brief</text>
+    </svg></div>
+    <figcaption>Each loss is a signed term that nobody could see at the moment it mattered. What I am giving up: lost requests and stalled approvals are real, and this prototype does not touch them.</figcaption>
+  </figure>
+  <details class="more"><summary>Compare the three stages row by row</summary>
   <div class="scroll"><table class="tbl cmp">
     <thead><tr><th></th><th>Contract intake</th><th>Negotiation</th><th>Intelligent repository</th></tr></thead>
     <tbody>
@@ -310,36 +365,46 @@ mark.hl.on{outline:2px solid var(--accent);outline-offset:1px}
       <tr><td>First value</td><td>When requesters adopt a new front door</td><td>At the next negotiation</td><td class="pick">The first week: the next notice date and the next invoice</td></tr>
     </tbody>
   </table></div>
-  <p class="prose">What I am giving up: lost requests and stalled approvals are real, and this prototype does not touch them. I accept that because a faster intake that feeds a repository nobody reads would only produce unread contracts faster.</p>
+  <p class="prose">I accept giving up lost requests and stalled approvals because a faster intake that feeds a repository nobody reads would only produce unread contracts faster.</p>
+  </details>
+
+  <h2>How much work the product takes on</h2>
+  <p class="prose"><b>AI reads, code calculates, people decide.</b> The line sits where an action starts to bind the company or touch a supplier relationship.</p>
+  <div class="chain">
+    <div><span class="k">1 &#183; Reads</span><span class="chip good">AI, automatic</span>Extracts each term together with the sentence it came from.</div>
+    <div><span class="k">2 &#183; Checks</span><span class="chip good">Code, automatic</span>Confirms the quoted sentence exists in the document and that the value appears in it. Works out notice dates and compares invoice lines with rate cards. The model never does the arithmetic.</div>
+    <div><span class="k">3 &#183; Drafts</span><span class="chip warn">AI, a person edits</span>The renewal brief, the notice letter and the dispute note.</div>
+    <div class="gate"><span class="k">4 &#183; Acts</span><span class="chip crit">A named person only</span>Sending a notice, holding a payment, ending a contract. The prototype never sends anything.</div>
+  </div>
+  <p class="prose sub">A notice of non-renewal has legal effect and a wrong dispute costs goodwill with a supplier. The cost of one wrong automatic action is larger than the minutes saved by skipping the review.</p>
 
   <h2>What it is worth</h2>
   <div class="sum">$220M <span>supplier spend a year (my assumption)</span> &#215; 1% <span>recovered</span> = $2.2M <span>a year</span></div>
-  <p class="prose">Built up from the three losses instead, the figure comes out about the same:</p>
-  <div class="scroll"><table class="tbl">
-    <thead><tr><th>Loss</th><th>Assumption</th><th class="num">A year</th></tr></thead>
-    <tbody>
-      <tr><td><b>Renewals decided on time</b></td><td>$66M of spend (30%) renews automatically each year. Half of it renews today with no review. Deciding those on time avoids about 3% in increases and unused volume.</td><td class="num">$1.0M</td></tr>
-      <tr><td><b>Invoices checked against the contract</b></td><td>$110M of spend (50%) is billed against a rate card. Checking catches and corrects 0.75% of it.</td><td class="num">$0.8M</td></tr>
-      <tr><td><b>Service credits claimed</b></td><td>$25M of spend carries a credit clause. Credits worth 2% of it go unclaimed today.</td><td class="num">$0.5M</td></tr>
-    </tbody>
-    <tfoot><tr><td>Total</td><td></td><td class="num">$2.3M</td></tr></tfoot>
-  </table></div>
-  <p class="prose sub">Every input is my assumption, and the two-week checks replace each one: the audit sets the renewal row, the invoice sample the invoice row, and the service reports the credit row. Published research puts average value lost to weak contract management at 8.6% of contract value (World Commerce &amp; Contracting, 2025). That only shows 1% is a modest share. Nothing above depends on it.</p>
+  <p class="prose">Built up from the three losses, the figure comes out about the same: $2.3M.</p>
+  <div class="stack" role="img" aria-label="Renewals 1.0 million dollars, invoices 0.8 million, credits 0.5 million"><span style="flex:10">Renewals $1.0M</span><span style="flex:8">Invoices $0.8M</span><span style="flex:5">Credits $0.5M</span></div>
+  <div class="tiles">
+    <div class="tile"><span class="tl">Renewals decided on time</span><span class="tn">$1.0M</span><span class="ts">$66M renews automatically each year. Half has no review today. Deciding on time avoids about 3%.</span></div>
+    <div class="tile"><span class="tl">Invoices checked against the contract</span><span class="tn">$0.8M</span><span class="ts">$110M is billed against a rate card. Checking corrects 0.75% of it.</span></div>
+    <div class="tile"><span class="tl">Service credits claimed</span><span class="tn">$0.5M</span><span class="ts">$25M carries a credit clause. Credits worth 2% go unclaimed today.</span></div>
+  </div>
+  <p class="prose sub">Every input is my assumption, and the two-week checks replace each one: the audit sets the renewal figure, the invoice sample the invoice figure, and the service reports the credit figure. Published research puts average value lost to weak contract management at 8.6% of contract value (World Commerce &amp; Contracting, 2025). That only shows 1% is a modest share. Nothing above depends on it.</p>
 
   <h2>What already exists</h2>
-  <p class="prose">Enterprise contract management platforms, Sirion among them, already read terms with AI and raise renewal alerts. This prototype does not claim a new category. It argues three positions I would defend in any product at this stage: measure decisions made, not alerts sent; let code verify every AI reading and hold back only the terms that move money; and treat Accounts Payable as a first-class reader, so filing one document changes what gets paid. I have not compared feature lists in detail.</p>
-
-  <h2>How much work the product takes on</h2>
-  <p class="prose">AI reads, code calculates, people decide. The line sits where an action starts to bind the company or touch a supplier relationship.</p>
-  <ol class="ladder">
-    <li><b>Reads</b><span>AI extracts each term together with the sentence it came from.</span><span class="chip good">Automatic</span></li>
-    <li><b>Checks</b><span>Code confirms the quoted sentence exists in the document and that the extracted value appears inside that sentence. It works out notice dates and compares invoice lines with rate cards. The model never does the arithmetic.</span><span class="chip good">Automatic</span></li>
-    <li><b>Drafts</b><span>AI writes the renewal brief, the notice letter and the dispute note.</span><span class="chip warn">A person edits</span></li>
-    <li><b>Acts</b><span>Sending a notice, holding a payment, ending a contract.</span><span class="chip crit">A named person only</span></li>
-  </ol>
-  <p class="prose sub">A notice of non-renewal has legal effect and a wrong dispute costs goodwill with a supplier. The cost of one wrong automatic action is larger than the minutes saved by skipping the review.</p>
+  <p class="prose">Enterprise contract management platforms, Sirion among them, already read terms with AI and raise renewal alerts. This prototype does not claim a new category. It argues three positions I would defend in any product at this stage. I have not compared feature lists in detail.</p>
+  <p class="prose">Those three positions are set out at the top of this page.</p>
 
   <h2>Assumptions</h2>
+  <div class="tiles">
+    <div class="tile"><span class="tl">The company (invented)</span><b>Kestrel Mobility</b><span class="ts">3,000 employees, about 2,500 suppliers, about 4,000 contract documents, USD 220M supplier spend a year.</span></div>
+    <div class="tile"><span class="tl">The documents</span><b>Readable PDF or Word</b><span class="ts">Scanned images need text recognition first, which is outside this prototype.</span></div>
+    <div class="tile"><span class="tl">The people</span><b>3 in Legal Operations, half time</b><span class="ts">About 750 hours a quarter. An hour a contract by hand, about 15 minutes checking only flagged terms. Both are guesses.</span></div>
+    <div class="tile"><span class="tl">Where they start</span><b>Top 20% of suppliers</b><span class="ts">About 800 documents, which I assume covers about 80% of spend.</span></div>
+    <div class="tile"><span class="tl">The systems</span><b>Ledger, sign-on, service reports</b><span class="ts">Invoices, seat usage and service data can be exported. Sample values here.</span></div>
+    <div class="tile"><span class="tl">Ownership</span><b>Every contract gets a named owner</b><span class="ts">The budget holder who pays the supplier, else the category manager. Undecided dates escalate at 30 days and at 10.</span></div>
+    <div class="tile"><span class="tl">Data</span><b>Enterprise AI agreement</b><span class="ts">Contract text may be sent to a model that does not train on it. Privileged documents stay out.</span></div>
+    <div class="tile"><span class="tl">The clock</span><b>17 November 2026</b><span class="ts">The demo date is fixed so the deadlines stay the same whenever you open this.</span></div>
+  </div>
+  <details class="more"><summary>Read the assumptions in full</summary>
   <ul class="prose">
     <li><b>The company.</b> Kestrel Mobility is invented. 3,000 employees, about 2,500 suppliers, about 4,000 active contract documents (1.6 per supplier), USD 220M of supplier spend a year.</li>
     <li><b>The documents.</b> Most signed contracts exist as readable PDF or Word files. Scanned images would need text recognition first, which is outside this prototype.</li>
@@ -349,7 +414,7 @@ mark.hl.on{outline:2px solid var(--accent);outline-offset:1px}
     <li><b>Data.</b> Contract text may be sent to an AI model under an enterprise agreement that excludes training on it. Privileged documents stay out.</li>
     <li><b>The clock.</b> The demo date is fixed at 17 November 2026 so the deadlines stay the same whenever you open this.</li>
   </ul>
-
+  </details>
   <h2>How AI was used, and where its first draft was wrong</h2>
   <ul class="prose">
     <li><b>In the product.</b> AI reads documents and drafts briefs, letters and dispute notes. Code checks every reading and does every calculation. A person decides and sends.</li>
@@ -371,21 +436,7 @@ mark.hl.on{outline:2px solid var(--accent);outline-offset:1px}
 <template id="tpl-stakeholders">
   <p class="desk">2 &#183; Stakeholder map</p>
   <h1>Eight groups have a stake. The ones with the least say are the ones who feel it most.</h1>
-  <p class="lede">I mapped each group twice: once by power and interest, to see who must approve this, and once by impact and power, to see who lives with the result.</p>
-
-  <div class="scroll"><table class="tbl">
-    <thead><tr><th>Who</th><th>What they want</th><th>What they fear</th></tr></thead>
-    <tbody>
-      <tr><td><b>General Counsel</b></td><td>Fewer surprises. One defensible record of what the company has agreed.</td><td>An AI summary that is wrong and gets relied on.</td></tr>
-      <tr><td><b>Legal Operations</b></td><td>To stop being the human search engine for "where is the contract?"</td><td>Becoming the bottleneck that has to key in 4,000 contracts.</td></tr>
-      <tr><td><b>Head of Procurement and category managers</b></td><td>Time to negotiate before a renewal, with facts about use and service.</td><td>Finding out about a renewal from the invoice.</td></tr>
-      <tr><td><b>Accounts Payable analysts</b></td><td>To know the agreed price before approving an invoice.</td><td>Being blamed for overpaying, or for paying a good supplier late.</td></tr>
-      <tr><td><b>CFO and Controller</b></td><td>Spend that matches budget, and savings they can count.</td><td>Another tool with a cost and no measurable return.</td></tr>
-      <tr><td><b>Contract owners in the business</b></td><td>Their supplier kept working and paid, with little admin.</td><td>Procurement or Finance damaging a relationship they depend on.</td></tr>
-      <tr><td><b>IT and Security</b></td><td>Controlled access. Confidential terms seen only by those who should.</td><td>Contract text leaving the company through an AI vendor.</td></tr>
-      <tr><td><b>Supplier account managers</b></td><td>Renewal on existing terms and prompt payment.</td><td>Disputes, notices and renegotiation they did not face before.</td></tr>
-    </tbody>
-  </table></div>
+  <p class="lede">I mapped each group twice: by power and interest, to see who must approve this, and by impact and power, to see who lives with the result.</p>
 
   <div class="quads">
     <div>
@@ -409,26 +460,88 @@ mark.hl.on{outline:2px solid var(--accent);outline-offset:1px}
       <p class="qcap">Impact runs bottom to top. Power runs left to right.</p>
     </div>
   </div>
-  <div class="callout"><b>What the comparison showed.</b> Legal Operations, Accounts Payable and contract owners sit in "keep informed" on the first grid and in "high impact, low power" on the second. A normal rollout would brief them last. Two of them get their own working screen: Legal Operations (Inbox) and Accounts Payable (Invoice check). The third screen, the renewal desk, is built for the Procurement category manager rather than the contract owner. That departs from the finding on purpose: stopping a renewal takes someone with the leverage to say no, and that is Procurement. Contract owners are served inside it. Every renewal names its owner, and the owner sends any notice. A view of their own is the first thing I would add after the interviews. The sponsors get the metrics page.</div>
+
+  <h2>What the comparison showed: who gets a screen</h2>
+  <figure class="fig">
+    <div class="dia"><svg viewBox="0 0 900 250" role="img" aria-label="The three high-impact, low-power groups and the screen each gets. Legal Operations gets the Inbox. Accounts Payable analysts get the Invoice check. Contract owners are named inside the Renewal desk, which is built for the Procurement category manager because stopping a renewal needs leverage. Sponsors get the metrics page.">
+      <defs><marker id="a-st" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" class="d-ah"/></marker></defs>
+      <text class="d-s" x="20" y="18">High impact, low power</text><text class="d-s" x="560" y="18">Their screen in the prototype</text>
+      <rect class="d-pick" x="20" y="30" width="250" height="46" rx="6"/><text class="d-pt" x="145" y="58" text-anchor="middle">Legal Operations</text>
+      <line class="d-l" x1="270" y1="53" x2="558" y2="53" marker-end="url(#a-st)"/>
+      <rect class="d-box" x="560" y="30" width="320" height="46" rx="6"/><text class="d-t" x="720" y="58" text-anchor="middle">Inbox</text>
+      <rect class="d-pick" x="20" y="92" width="250" height="46" rx="6"/><text class="d-pt" x="145" y="120" text-anchor="middle">Accounts Payable analysts</text>
+      <line class="d-l" x1="270" y1="115" x2="558" y2="115" marker-end="url(#a-st)"/>
+      <rect class="d-box" x="560" y="92" width="320" height="46" rx="6"/><text class="d-t" x="720" y="120" text-anchor="middle">Invoice check</text>
+      <rect class="d-pick" x="20" y="154" width="250" height="46" rx="6"/><text class="d-pt" x="145" y="182" text-anchor="middle">Contract owners</text>
+      <line class="d-dash" x1="270" y1="177" x2="558" y2="177" marker-end="url(#a-st)"/><text class="d-s" x="414" y="169" text-anchor="middle">named inside, send any notice</text>
+      <rect class="d-box" x="560" y="154" width="320" height="46" rx="6"/><text class="d-t" x="720" y="174" text-anchor="middle">Renewal desk</text><text class="d-s" x="720" y="190" text-anchor="middle">built for the Procurement category manager</text>
+      <text class="d-s" x="20" y="232">Sponsors (General Counsel, Head of Procurement, CFO) get the metrics page.</text>
+    </svg></div>
+    <figcaption>A normal rollout would brief these three groups last. Two get their own screen. The renewal desk goes to Procurement on purpose: stopping a renewal takes someone with the leverage to say no. A view for contract owners is the first thing I would add after the interviews.</figcaption>
+  </figure>
+
+  <h2>What each group wants and fears</h2>
+  <div class="cards">
+    <div class="card"><h3>General Counsel</h3><p><span class="chip good">wants</span> Fewer surprises. One defensible record of what the company has agreed.</p><p><span class="chip crit">fears</span> An AI summary that is wrong and gets relied on.</p></div>
+    <div class="card"><h3>Legal Operations</h3><p><span class="chip good">wants</span> To stop being the human search engine for "where is the contract?"</p><p><span class="chip crit">fears</span> Becoming the bottleneck that has to key in 4,000 contracts.</p></div>
+    <div class="card"><h3>Head of Procurement and category managers</h3><p><span class="chip good">wants</span> Time to negotiate before a renewal, with facts about use and service.</p><p><span class="chip crit">fears</span> Finding out about a renewal from the invoice.</p></div>
+    <div class="card"><h3>Accounts Payable analysts</h3><p><span class="chip good">wants</span> To know the agreed price before approving an invoice.</p><p><span class="chip crit">fears</span> Being blamed for overpaying, or for paying a good supplier late.</p></div>
+    <div class="card"><h3>CFO and Controller</h3><p><span class="chip good">wants</span> Spend that matches budget, and savings they can count.</p><p><span class="chip crit">fears</span> Another tool with a cost and no measurable return.</p></div>
+    <div class="card"><h3>Contract owners in the business</h3><p><span class="chip good">wants</span> Their supplier kept working and paid, with little admin.</p><p><span class="chip crit">fears</span> Procurement or Finance damaging a relationship they depend on.</p></div>
+    <div class="card"><h3>IT and Security</h3><p><span class="chip good">wants</span> Controlled access. Confidential terms seen only by those who should.</p><p><span class="chip crit">fears</span> Contract text leaving the company through an AI vendor.</p></div>
+    <div class="card"><h3>Supplier account managers</h3><p><span class="chip good">wants</span> Renewal on existing terms and prompt payment.</p><p><span class="chip crit">fears</span> Disputes, notices and renegotiation they did not face before.</p></div>
+  </div>
 
   <h2>Where interests conflict, and what the design does about it</h2>
-  <div class="scroll"><table class="tbl">
-    <thead><tr><th>Conflict</th><th>What each side wants</th><th>How the prototype handles it</th></tr></thead>
-    <tbody>
-      <tr><td><b>Legal against speed</b></td><td>Legal wants nothing relied on until checked. The business wants answers now.</td><td>Only terms that set a date or a price wait for a person, and only when the AI was unsure or its quote did not match. Every answer shows its source sentence.</td></tr>
-      <tr><td><b>Procurement against the contract owner</b></td><td>Procurement wants leverage, including leaving. The owner wants no disruption.</td><td>The renewal desk forces an explicit choice before the notice date and records who made it. "Let it renew" is a valid choice. Saying nothing is not.</td></tr>
-      <tr><td><b>Accounts Payable against the supplier and the owner</b></td><td>Finance wants to hold anything that does not match. The supplier and the owner want payment on time.</td><td>The undisputed amount is released on normal terms. Only the difference is held, with the clause quoted.</td></tr>
-      <tr><td><b>The supplier against visibility</b></td><td>Automatic renewal, uncapped increases and unclaimed credits all favour the supplier when nobody is looking.</td><td>The product removes that advantage. In return, suppliers with clean invoices get approved faster, and that is tracked as a guardrail.</td></tr>
-      <tr><td><b>Security against open search</b></td><td>IT and Legal want narrow access. Everyone else wants to search everything.</td><td>Assumed: access follows the owning department, with commercial terms open to Finance and Procurement. Not built in this prototype.</td></tr>
-      <tr><td><b>The CFO against Legal Operations' capacity</b></td><td>Finance wants savings this quarter. Checked by hand at about an hour each, the 800 documents for the top 20% of suppliers would take the whole quarter, and all 4,000 would take more than five quarters.</td><td>Review by exception cuts a contract to about 15 minutes, so the top 20% takes about 200 hours, roughly a month. File by spend: the top 20% first, and the rest as their renewal or first invoice comes up.</td></tr>
-    </tbody>
-  </table></div>
+  <div class="vs"><div><div class="pair"><span class="chip mute">Legal: nothing relied on until checked</span><i></i><span class="chip mute">The business: answers now</span></div></div><p>Only terms that set a date or a price wait for a person, and only when the AI was unsure or its quote did not match. Every answer shows its source sentence.</p></div>
+  <div class="vs"><div><div class="pair"><span class="chip mute">Procurement: leverage, including leaving</span><i></i><span class="chip mute">Contract owner: no disruption</span></div></div><p>The renewal desk forces an explicit choice before the notice date and records who made it. "Let it renew" is a valid choice. Saying nothing is not.</p></div>
+  <div class="vs"><div><div class="pair"><span class="chip mute">Accounts Payable: hold what does not match</span><i></i><span class="chip mute">Supplier and owner: payment on time</span></div></div><p>The undisputed amount is released on normal terms. Only the difference is held, with the clause quoted.</p></div>
+  <div class="vs"><div><div class="pair"><span class="chip mute">Supplier: gains when nobody is looking</span><i></i><span class="chip mute">Kestrel: visibility</span></div></div><p>The product removes that advantage. In return, suppliers with clean invoices get approved faster, and that is tracked as a guardrail.</p></div>
+  <div class="vs"><div><div class="pair"><span class="chip mute">IT and Legal: narrow access</span><i></i><span class="chip mute">Everyone else: search everything</span></div></div><p>Assumed: access follows the owning department, with commercial terms open to Finance and Procurement. Not built in this prototype.</p></div>
+  <div class="vs"><div><div class="pair"><span class="chip mute">CFO: savings this quarter</span><i></i><span class="chip mute">Legal Operations: three people</span></div></div><p>By hand at about an hour each, the top 20% (800 documents) would take the whole quarter and all 4,000 more than five. Review by exception is about 15 minutes, so the top 20% takes about 200 hours, roughly a month. File by spend: top 20% first, the rest as their renewal or first invoice comes up.</p></div>
 </template>
 
 <template id="tpl-problem">
   <p class="desk">3 &#183; The problem</p>
   <h1>Kestrel pays for terms it cannot see.</h1>
-  <p class="lede">The people who have to act on a contract, the manager who owns the supplier and the analyst who pays the invoice, cannot see what was signed. So notice dates pass, credits go unclaimed, and invoices are paid at whatever price the supplier puts on them.</p>
+  <p class="lede">The people who have to act on a contract cannot see what was signed. So notice dates pass, credits go unclaimed, and invoices are paid at whatever price the supplier puts on them.</p>
+
+  <figure class="fig">
+    <div class="dia"><svg viewBox="0 0 980 250" role="img" aria-label="The same mechanism three times. A notice period sits on page nine of a PDF, nobody is told, and the contract renews unreviewed. A rate card and surcharge cap sit in an unfiled amendment, nobody is told, and the invoice is paid at the supplier's price. A service credit clause sits in a contract Accounts Payable has never seen, nobody is told, and the credit is never claimed.">
+      <defs><marker id="a-pr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" class="d-ah"/></marker></defs>
+      <text class="d-s" x="20" y="22">A signed term</text><text class="d-s" x="270" y="22">Where it sits</text><text class="d-s" x="520" y="22">Who is told</text><text class="d-s" x="730" y="22">What happens</text>
+      <rect class="d-box" x="20" y="36" width="200" height="50" rx="6"/><text class="d-b" x="120" y="66" text-anchor="middle">Notice 60 days before term end</text>
+      <rect class="d-box" x="270" y="36" width="200" height="50" rx="6"/><text class="d-b" x="370" y="66" text-anchor="middle">page 9 of a PDF in a team drive</text>
+      <rect class="d-none" x="520" y="36" width="160" height="50" rx="6"/><text class="d-s" x="600" y="66" text-anchor="middle">nobody</text>
+      <rect class="d-bad" x="730" y="36" width="230" height="50" rx="6"/><text class="d-xt" x="845" y="66" text-anchor="middle">renews for a year, unreviewed</text>
+      <rect class="d-box" x="20" y="106" width="200" height="50" rx="6"/><text class="d-b" x="120" y="136" text-anchor="middle">Rate card and surcharge cap</text>
+      <rect class="d-box" x="270" y="106" width="200" height="50" rx="6"/><text class="d-b" x="370" y="136" text-anchor="middle">an amendment in a mailbox</text>
+      <rect class="d-none" x="520" y="106" width="160" height="50" rx="6"/><text class="d-s" x="600" y="136" text-anchor="middle">nobody</text>
+      <rect class="d-bad" x="730" y="106" width="230" height="50" rx="6"/><text class="d-xt" x="845" y="136" text-anchor="middle">invoice paid at the supplier's price</text>
+      <rect class="d-box" x="20" y="176" width="200" height="50" rx="6"/><text class="d-b" x="120" y="206" text-anchor="middle">Credit if service level is missed</text>
+      <rect class="d-box" x="270" y="176" width="200" height="50" rx="6"/><text class="d-b" x="370" y="206" text-anchor="middle">a contract AP has never seen</text>
+      <rect class="d-none" x="520" y="176" width="160" height="50" rx="6"/><text class="d-s" x="600" y="206" text-anchor="middle">nobody</text>
+      <rect class="d-bad" x="730" y="176" width="230" height="50" rx="6"/><text class="d-xt" x="845" y="206" text-anchor="middle">credit never claimed</text>
+      <line class="d-l" x1="220" y1="61" x2="268" y2="61" marker-end="url(#a-pr)"/><line class="d-l" x1="470" y1="61" x2="518" y2="61" marker-end="url(#a-pr)"/><line class="d-l" x1="680" y1="61" x2="728" y2="61" marker-end="url(#a-pr)"/>
+      <line class="d-l" x1="220" y1="131" x2="268" y2="131" marker-end="url(#a-pr)"/><line class="d-l" x1="470" y1="131" x2="518" y2="131" marker-end="url(#a-pr)"/><line class="d-l" x1="680" y1="131" x2="728" y2="131" marker-end="url(#a-pr)"/>
+      <line class="d-l" x1="220" y1="201" x2="268" y2="201" marker-end="url(#a-pr)"/><line class="d-l" x1="470" y1="201" x2="518" y2="201" marker-end="url(#a-pr)"/><line class="d-l" x1="680" y1="201" x2="728" y2="201" marker-end="url(#a-pr)"/>
+    </svg></div>
+    <figcaption>The same failure three times: nothing turns a signed clause into a date or a price with someone's name on it.</figcaption>
+  </figure>
+
+  <figure class="fig">
+    <div class="dia"><svg viewBox="0 0 900 170" role="img" aria-label="Timeline for the Cloudmetric contract in the sample data. Today is 17 November 2026. The last day to give notice is 2 December 2026, 15 days away. The term ends 31 January 2027. Between those two dates it is too late to stop the renewal, and after the term ends the company is committed for 12 more months at up to 5 percent more.">
+      <defs><marker id="a-tl" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" class="d-ah"/></marker></defs>
+      <rect class="d-good" x="80" y="78" width="80" height="24"/><rect class="d-bad" x="160" y="78" width="400" height="24"/><rect class="d-sunk" x="560" y="78" width="290" height="24"/>
+      <line class="d-l" x1="40" y1="102" x2="868" y2="102" marker-end="url(#a-tl)"/>
+      <line class="d-l" x1="80" y1="66" x2="80" y2="108"/><text class="d-t" x="80" y="56" text-anchor="middle">Today, 17 Nov</text>
+      <line class="d-x" x1="160" y1="66" x2="160" y2="118"/><text class="d-xt" x="154" y="134">Last day to give notice, 2 Dec</text><text class="d-s" x="154" y="150">15 days away</text>
+      <line class="d-l" x1="560" y1="66" x2="560" y2="118"/><text class="d-t" x="560" y="56" text-anchor="middle">Term ends, 31 Jan 2027</text><text class="d-s" x="560" y="134" text-anchor="middle">the date people remember</text>
+      <text class="d-xt" x="360" y="95" text-anchor="middle">too late to stop the renewal</text>
+      <text class="d-s" x="705" y="95" text-anchor="middle">12 more months, up to +5%</text>
+    </svg></div>
+    <figcaption>One contract from the sample data, Cloudmetric (USD 186,000 a year, 60 days' notice). The window to decide closes two months before the date written on the contract.</figcaption>
+  </figure>
 
   <h2>Who it affects</h2>
   <div class="cards">
@@ -454,11 +567,11 @@ mark.hl.on{outline:2px solid var(--accent);outline-offset:1px}
   <p class="sub">How this makes each of them feel is a hypothesis until I have interviewed them: exposed, for the category manager; blamed, for the analyst; interrupted, for Legal Operations.</p>
 
   <h2>Why it matters</h2>
-  <ul class="prose">
-    <li><b>Money leaves quietly.</b> A renewal nobody reviewed commits a further year. An increase nobody checked compounds. A credit nobody claimed is a gift.</li>
-    <li><b>Risk sits unseen.</b> Work continues after a contract ends. A liability cap turns out to be three months of fees.</li>
-    <li><b>Skilled time goes on searching.</b> Lawyers and buyers look for documents when they could be using them.</li>
-  </ul>
+  <div class="tiles">
+    <div class="tile"><b>Money leaves quietly</b><span class="ts">A renewal nobody reviewed commits a further year. An increase nobody checked compounds. A credit nobody claimed is a gift.</span></div>
+    <div class="tile"><b>Risk sits unseen</b><span class="ts">Work continues after a contract ends. A liability cap turns out to be three months of fees.</span></div>
+    <div class="tile"><b>Skilled time goes on searching</b><span class="ts">Lawyers and buyers look for documents when they could be using them.</span></div>
+  </div>
 
   <h2>How I know it is real</h2>
   <div class="cards">
@@ -472,62 +585,75 @@ mark.hl.on{outline:2px solid var(--accent);outline-offset:1px}
   </div>
 
   <h2>What I would check in the first two weeks</h2>
-  <ul class="prose">
-    <li><b>A 50-contract audit.</b> Take the top 50 suppliers by spend. Count how many signed contracts can be found within a day, and how many notice dates passed in the last year with no decision recorded.</li>
-    <li><b>Three months of invoices</b> for the top 20 suppliers, compared by hand with their rate cards. For each, note whether a service report exists that a credit check could read. If few do, the credit check waits and the effort goes to renewals and invoices.</li>
-    <li><b>Six interviews:</b> two category managers, two Accounts Payable analysts, one Legal Operations manager and one budget owner.</li>
-    <li><b>A request count.</b> From Procurement's mailbox, last quarter's purchase requests that were lost, restarted or took more than six weeks, with a cost per delay estimated in the interviews.</li>
-  </ul>
-  <p class="prose"><b>What would prove me wrong:</b> I compare the two stages on one yardstick, money lost a year. The audit and the invoice sample give the loss after signature: each missed notice date times the increase it let through, plus overbilling and unclaimed credits, scaled from the sample to all spend. The request count gives a rough loss before signature. If the loss after signature comes in under USD 550,000 a year, a quarter of my sizing and about 0.25% of spend, or below the loss before signature, intake is the better place to start.</p>
+  <div class="tiles">
+    <div class="tile"><span class="tn">50</span><b>contracts audited</b><span class="ts">Top 50 suppliers by spend. How many signed contracts can be found within a day, and how many notice dates passed last year with no decision recorded.</span></div>
+    <div class="tile"><span class="tn">3 months</span><b>of invoices</b><span class="ts">Top 20 suppliers, compared by hand with their rate cards. Note whether a service report exists that a credit check could read. If few do, the credit check waits.</span></div>
+    <div class="tile"><span class="tn">6</span><b>interviews</b><span class="ts">Two category managers, two Accounts Payable analysts, one Legal Operations manager and one budget owner.</span></div>
+    <div class="tile"><span class="tn">1</span><b>request count</b><span class="ts">Last quarter's purchase requests that were lost, restarted or took more than six weeks, with a cost per delay from the interviews.</span></div>
+  </div>
+
+  <h3 style="margin-top:22px">What would prove me wrong</h3>
+  <div class="chain">
+    <div><span class="k">Measure</span><b>Loss after signature, a year</b>From the audit and the invoice sample: missed notice dates times the increase each let through, plus overbilling and unclaimed credits, scaled to all spend.</div>
+    <div><span class="k">Measure</span><b>Loss before signature, a year</b>From the request count. A rough figure.</div>
+    <div class="gate"><span class="k">Test</span><b>Is the loss after signature under USD 550,000 a year, or below the loss before signature?</b>USD 550,000 is a quarter of my sizing and about 0.25% of spend.</div>
+    <div><span class="k">Result</span><span class="chip crit">Yes: intake is the better place to start</span><span class="chip good">No: the repository stands</span></div>
+  </div>
 </template>
 
 <template id="tpl-metrics">
   <p class="desk">5 &#183; Success metrics</p>
   <h1>The north star is the share of contract dates that got a decision before they passed.</h1>
-  <p class="lede">A contract date here means any date that costs money if it goes by unseen: a renewal notice deadline, an expiry, a price change, the window to claim a credit. The metric counts those where a named person recorded a decision in time.</p>
-  <p class="prose"><b>What it divides by.</b> Every date that fell due, not only the ones in the repository. A signed document known to exist but not yet filed counts as one undecided date until it is filed. A date that passed while its document sat unfiled is recorded as a miss when the document turns up, in the period the date fell. So filing less can never make the number look better.</p>
+  <p class="lede">A contract date here means any date that costs money if it goes by unseen: a renewal notice deadline, an expiry, a price change, the window to claim a credit.</p>
+  <div class="frac"><span>dates where a named person recorded a decision in time</span><span>every date that fell due, filed or not</span></div>
+  <p class="prose sub">A signed document known to exist but not yet filed counts as one undecided date. A date that passed while its document sat unfiled is recorded as a miss when the document turns up. So filing less can never make the number look better.</p>
   <h2>The headline result in the sample</h2>
   <div class="headline-box"><p class="hl-line">Filing three signed documents that sat outside the repository raises the amount flagged on the sample's five invoices from $8,810.52 to $28,561.92, about 5.7% of the $502,751.56 billed.</p><p class="sub">Flagged means billed above the agreed rate or cap, or a service credit the contract gives that the invoice leaves out. All figures come from invented sample data.</p></div>
   <div id="live-metrics"></div>
 
   <h2>Why this metric</h2>
-  <ul class="prose">
-    <li><b>Why not dollars saved?</b> Savings arrive months later, depend on how well someone negotiates, and are easy to inflate. I track them as an outcome and do not target them.</li>
-    <li><b>Why not contracts filed?</b> A full repository that nobody acts on is what the company has today, with better search.</li>
-    <li><b>Why decisions?</b> A decision made on time needs every part to have worked: the contract was filed, the term was read correctly, the right person was told, and they acted. "Let it renew" counts. Silence does not.</li>
-    <li><b>What it does not see.</b> Invoices. Overbilling and unclaimed credits are not dates, so the north star cannot catch them. They are measured below, by the share of invoices checked against a contract and by the money confirmed back.</li>
-  </ul>
+  <div class="chain">
+    <div><span class="k">1</span><b>The contract was filed</b></div>
+    <div><span class="k">2</span><b>The term was read correctly</b></div>
+    <div><span class="k">3</span><b>The right person was told</b></div>
+    <div><span class="k">4</span><b>They acted</b></div>
+    <div class="star"><span class="k">North star</span><b>A decision before the date</b>"Let it renew" counts. Silence does not.</div>
+  </div>
+  <p class="prose sub">A decision made on time needs every earlier step to have worked, so one number checks the whole chain.</p>
+  <div class="tiles">
+    <div class="tile"><span class="chip crit">not chosen</span><b>Dollars saved</b><span class="ts">Arrive months later, depend on how well someone negotiates, and are easy to inflate. Tracked as an outcome, not targeted.</span></div>
+    <div class="tile"><span class="chip crit">not chosen</span><b>Contracts filed</b><span class="ts">A full repository that nobody acts on is what the company has today, with better search.</span></div>
+    <div class="tile"><span class="chip warn">blind spot</span><b>Invoices</b><span class="ts">Overbilling and unclaimed credits are not dates, so the north star cannot catch them. They are measured below.</span></div>
+  </div>
+  <div class="meter" role="img" aria-label="Baseline guessed at under 20 percent. Target 90 percent."><i style="width:20%;background:var(--crit)"></i><b style="left:20%">under 20%</b><em style="left:20%">today, my guess</em><b style="left:90%">90%</b><em style="left:90%">target</em></div>
   <p class="prose"><b>Target:</b> 90% for contracts in the top 80% of spend within two quarters. <b>Baseline:</b> unknown, and the 50-contract audit would set it. My guess is under 20%.</p>
 
   <h2>How I will know it works</h2>
-  <div class="scroll"><table class="tbl">
-    <thead><tr><th>Question</th><th>Measure</th><th>Target</th></tr></thead>
-    <tbody>
-      <tr><td><b>Coverage.</b> Is the spend in the repository?</td><td>Share of the last 12 months' supplier spend in the ledger that was paid to a supplier with a verified contract. It is counted from the ledger, not the repository, so a contract nobody filed shows up as uncovered spend.</td><td>80% within 90 days</td></tr>
-      <tr><td><b>Trust.</b> Is the reading right?</td><td>Share of deadline and price terms a reviewer had to correct, and the error rate in a monthly audit of terms accepted without review</td><td>Under 5% corrected. Under 1% wrong among those accepted without review.</td></tr>
-      <tr><td><b>Effort.</b> Can three people keep up?</td><td>Median minutes for Legal Operations to verify one contract</td><td>Under 15</td></tr>
-      <tr><td><b>Reach.</b> Does anyone outside Legal use it?</td><td>Weekly users in Procurement and Finance, and the share of invoices over USD 10,000 checked against a contract</td><td>60% of those two teams weekly. 90% of invoices.</td></tr>
-      <tr><td><b>Outcome.</b> Did money stay in?</td><td>Overbilling corrected, increases avoided and credits claimed, each confirmed by a credit note or a signed change</td><td>Tracked, with no target</td></tr>
-    </tbody>
-  </table></div>
+  <div class="tiles">
+    <div class="tile"><span class="tl">Coverage: is the spend in the repository?</span><span class="tn">80%</span><span class="ts">of the last 12 months' ledger spend paid to a supplier with a verified contract, within 90 days. Counted from the ledger, so an unfiled contract shows as uncovered spend.</span></div>
+    <div class="tile"><span class="tl">Trust: is the reading right?</span><span class="tn">under 5%</span><span class="ts">of deadline and price terms corrected by a reviewer. Under 1% wrong in a monthly audit of terms accepted without review.</span></div>
+    <div class="tile"><span class="tl">Effort: can three people keep up?</span><span class="tn">under 15 min</span><span class="ts">median for Legal Operations to verify one contract.</span></div>
+    <div class="tile"><span class="tl">Reach: does anyone outside Legal use it?</span><span class="tn">60% / 90%</span><span class="ts">60% of Procurement and Finance use it weekly. 90% of invoices over USD 10,000 are checked against a contract.</span></div>
+    <div class="tile"><span class="tl">Outcome: did money stay in?</span><span class="tn">no target</span><span class="ts">Overbilling corrected, increases avoided and credits claimed, each confirmed by a credit note or a signed change.</span></div>
+  </div>
 
   <h2>Guardrails</h2>
-  <ul class="prose">
-    <li><b>Wrong flags.</b> Under 10% of invoice disputes withdrawn because the product was wrong. Each one costs goodwill with a supplier.</li>
-    <li><b>Clean invoices are not slowed.</b> Days to approve an invoice that matches its contract must not rise.</li>
-    <li><b>No action without a person.</b> Zero notices or disputes leave the company without a named approver.</li>
-    <li><b>No rubber-stamping.</b> "Let it renew" has to stay a real decision, or the north star can be hit by clicking it on everything. Each month I sample the renewals where the brief flagged low usage, a missed service level or an uncapped increase. If more than half were renewed with no reason recorded, the number is being gamed, and a one-line reason becomes required whenever someone renews against the brief.</li>
-  </ul>
+  <div class="tiles">
+    <div class="tile"><span class="tl">Wrong flags</span><span class="tn">under 10%</span><span class="ts">of invoice disputes withdrawn because the product was wrong. Each one costs goodwill with a supplier.</span></div>
+    <div class="tile"><span class="tl">Clean invoices are not slowed</span><span class="tn">no rise</span><span class="ts">in days to approve an invoice that matches its contract.</span></div>
+    <div class="tile"><span class="tl">No action without a person</span><span class="tn">0</span><span class="ts">notices or disputes leave the company without a named approver.</span></div>
+    <div class="tile"><span class="tl">No rubber-stamping</span><span class="tn">monthly sample</span><span class="ts">of renewals where the brief flagged low usage, a missed service level or an uncapped increase. If more than half were renewed with no reason recorded, a one-line reason becomes required.</span></div>
+  </div>
 
   <h2>What would make me rethink the approach</h2>
   <div class="scroll"><table class="tbl">
     <thead><tr><th>If I see this</th><th>It means</th><th>I would</th></tr></thead>
     <tbody>
-      <tr><td>Reviewers correct more than 10% of deadline and price terms after the first 300 contracts</td><td>The reading is not good enough to trust by exception</td><td>Have a person key the five critical terms, with AI only suggesting and locating them</td></tr>
-      <tr><td>Alerts arrive on time but fewer than half get a decision</td><td>The gap is ownership, and information was never the constraint</td><td>Move to intake: fix who owns each contract at the moment it is requested</td></tr>
-      <tr><td>Verification still takes more than 30 minutes a contract after the first 300</td><td>The top 20% alone would take half a quarter, and the full 4,000 nearly three quarters. The backlog will not clear while new contracts keep arriving.</td><td>Cut the scope to renewal terms only, and add rate cards later</td></tr>
-      <tr><td>Under 30% of invoice value maps to a rate card that code can check</td><td>Most spend is priced in ways a line comparison cannot test</td><td>Drop invoice checking and put the effort into renewals and credits</td></tr>
-      <tr><td>Under 10% of Procurement and Finance use Ask after eight weeks</td><td>A separate destination is the wrong shape</td><td>Push the dates and price checks into email and the ledger where they already work</td></tr>
+      <tr><td><span class="chip crit">over 10%</span><br>of deadline and price terms corrected after the first 300 contracts</td><td>The reading is not good enough to trust by exception</td><td><b>Have a person key the five critical terms</b>, with AI only suggesting and locating them</td></tr>
+      <tr><td><span class="chip crit">under half</span><br>of on-time alerts get a decision</td><td>The gap is ownership, and information was never the constraint</td><td><b>Move to intake:</b> fix who owns each contract at the moment it is requested</td></tr>
+      <tr><td><span class="chip crit">over 30 min</span><br>to verify a contract after the first 300</td><td>The top 20% alone would take half a quarter, and the full 4,000 nearly three quarters. The backlog will not clear while new contracts keep arriving.</td><td><b>Cut the scope to renewal terms only</b>, and add rate cards later</td></tr>
+      <tr><td><span class="chip crit">under 30%</span><br>of invoice value maps to a rate card that code can check</td><td>Most spend is priced in ways a line comparison cannot test</td><td><b>Drop invoice checking</b> and put the effort into renewals and credits</td></tr>
+      <tr><td><span class="chip crit">under 10%</span><br>of Procurement and Finance use Ask after eight weeks</td><td>A separate destination is the wrong shape</td><td><b>Push the dates and price checks into email and the ledger</b> where they already work</td></tr>
     </tbody>
   </table></div>
 </template>
