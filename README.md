@@ -3,7 +3,7 @@
 A working, AI-powered prototype of a contract repository for the stage after signature. Built for the Sirion assignment set through ISB.
 
 **Open the prototype:** https://akshatj28.github.io/afterink/
-Start with **Guided tour** in the top bar. It takes about two minutes.
+Start on the **Overview**: each of the three money leaks has a **Show me, step by step** walkthrough.
 
 ## In 30 seconds
 

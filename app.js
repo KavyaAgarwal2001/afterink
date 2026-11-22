@@ -1053,7 +1053,7 @@
     'tour-next'() { tourGo(TOUR.i + 1); },
     'tour-prev'() { tourGo(TOUR.i - 1); },
     'tour-here'() { tourGo(TOUR.i); },
-    'tour-end'() { TOUR.on = false; tourPaint(); toast('Walkthrough closed. Start another from the Overview, or the guided tour from the top bar.'); },
+    'tour-end'() { TOUR.on = false; tourPaint(); toast('Walkthrough closed. Start another from the Overview.'); },
     'intro-tour'() { introSeen(); startTour(TOUR_STEPS, 'Guided tour'); },
     'intro-skip'() { introSeen(); },
 
@@ -1174,13 +1174,6 @@
     strip();
     render();   /* render keeps the focused input and its caret, so this is safe while someone types */
   }
-  /* Light and dark: Night is the default. The top-bar button switches, and this viewer's choice is
-     remembered in their browser. The page sets the mode before it first paints (see index.html). */
-  function headerIcons() {
-    const tb = $('#tour-btn');
-    if (tb && !tb.querySelector('svg')) tb.insertAdjacentHTML('afterbegin', icon('play'));
-  }
-  headerIcons();
   render();
   introInit();
   initAI();
