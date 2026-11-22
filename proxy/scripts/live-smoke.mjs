@@ -1,7 +1,7 @@
 /* Live smoke test: sends every AI task to a running server and checks the answers, not just that
    something came back. It calls the real model, so it uses free-tier quota (about 9 calls a run).
 
-     npm run smoke                                   # the deployed server
+     npm run smoke                                   # the server the page uses (AI_URL_DEFAULT in app.js)
      npm run smoke -- http://127.0.0.1:8787          # a local server (npm run dev)
 
    Exit code 0 when every check passes. */
@@ -10,7 +10,10 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
-const SERVER = (process.argv[2] || 'https://afterink-proxy.afterink-proxy.workers.dev').replace(/\/$/, '');
+/* With no address given, test the server the page itself uses (AI_URL_DEFAULT in app.js). */
+const PAGE_SERVER = (/const AI_URL_DEFAULT = '([^']+)'/.exec(fs.readFileSync(path.join(ROOT, 'app.js'), 'utf8')) || [])[1];
+const SERVER = (process.argv[2] || PAGE_SERVER || '').replace(/\/$/, '');
+if (!SERVER) { console.error('No server address: pass one, for example npm run smoke -- https://your-server.workers.dev'); process.exit(2); }
 const ORIGIN = SERVER.includes('127.0.0.1') || SERVER.includes('localhost') ? 'http://127.0.0.1:8765' : 'https://akshatj28.github.io';
 
 const window = {};
