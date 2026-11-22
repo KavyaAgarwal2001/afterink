@@ -272,7 +272,7 @@
     return chunks().map(ch => { const tt = toks(ch.text + ' ' + ch.supplier); let s = 0; const seen = new Set(); for (const t of tt) if (qt.has(t) && !seen.has(t)) { s += 1; seen.add(t); } return { ch, s }; }).filter(x => x.s > 0).sort((a, b) => b.s - a.s).slice(0, k).map(x => x.ch);
   }
   function register() {
-    return S.contracts.map(c => `${c.id} | ${c.supplier} | ${c.type} | owner ${c.owner} | annual value ${c.f.annualValue != null ? money(c.f.annualValue) : 'not stated'} | term ends ${c.f.termEnd || 'not stated'} | auto-renews ${c.f.autoRenew ? 'yes, ' + (c.f.renewalMonths || '?') + ' months' : 'no'} | notice ${c.f.noticeDays != null ? c.f.noticeDays + ' days' : 'n/a'} | notice by ${noticeBy(c) || 'n/a'} | price rule: ${c.f.upliftText || 'not stated'} | liability: ${c.f.liabilityCap || 'not stated'}`).join('\n');
+    return S.contracts.map(c => `${c.id} | ${c.supplier} | ${c.type} | owner ${c.owner} | annual value ${c.f.annualValue != null ? money(c.f.annualValue) : 'not stated'} | term ends ${c.f.termEnd || 'not stated'} | auto-renews ${c.f.autoRenew ? 'yes, ' + (c.f.renewalMonths || '?') + ' months' : 'no'} | notice ${c.f.noticeDays != null ? c.f.noticeDays + ' days' : 'n/a'} | notice by ${noticeBy(c) ? `${noticeBy(c)} (${daysBetween(DEMO_TODAY, noticeBy(c)) < 0 ? `passed ${-daysBetween(DEMO_TODAY, noticeBy(c))} days ago` : `${daysBetween(DEMO_TODAY, noticeBy(c))} days from today`})` : 'n/a'} | term ends in ${c.f.termEnd ? daysBetween(DEMO_TODAY, c.f.termEnd) + ' days' : 'n/a'} | price rule: ${c.f.upliftText || 'not stated'} | liability: ${c.f.liabilityCap || 'not stated'}`).join('\n');
   }
   const secOf = (c, k) => { const q = c.prov[k]; const ch = q && chunks().find(x => x.cid === c.id && x.text.includes(q)); return ch ? ' §' + ch.sec : ''; };
   function cannedAnswer(id) {
@@ -381,7 +381,7 @@
   const chip = (tone, text) => `<span class="chip ${tone}">${esc(text)}</span>`;
   const deskTag = d => `<p class="desk">${esc(DESK[d])} desk</p>`;
   const aiNote = () => live() ? '' : `<p class="note">${AI.state === 'checking' ? 'Checking whether the AI server is reachable.' : `The live AI is off because ${WHY_OFF[AI.why] || WHY_OFF.offline}, so this page replays saved AI results. The checks, dates and sums still run live in your browser.`}</p>`;
-  const PASTE_NOTE = 'Text you paste here is sent to the AI model through this demo\'s server, which runs on a free key whose provider may keep what it receives. Paste only public or invented documents.';
+  const PASTE_NOTE = 'Text you paste here is sent to the AI model through this demo\'s server, which runs on a free key whose provider may keep what it receives. Paste only public or sample documents.';
   const readingNow = () => !!(T.review && T.review.streaming);
   function hero() {
     if (!live()) return '';
@@ -429,12 +429,12 @@
         ['inbox', 'File the Fleetline amendment', 'Legal Operations. A signed amendment has sat in a mailbox since September. Read it with AI, check the two changed terms against the source, and file it.'],
         ['invoices', 'Check the Fleetline invoice', 'Accounts Payable. Open invoice FL-20931. With the amendment filed, the October invoice is over the agreed rate and over the new surcharge cap.'],
         ['inbox', 'File the Talentbridge staffing agreement', 'Legal Operations. Until this is filed, Accounts Payable has nothing to check a USD 168,128 invoice against.'],
-        ['renewals', 'Decide the Cloudmetric renewal', 'Procurement. 15 days are left to give notice. Read the brief, choose, edit the draft notice and record the decision.'],
+        ['renewals', 'Decide the Cloudmetric renewal', 'Procurement. 15 days are left to give notice. Read the renewal brief, choose, edit the draft notice and record the decision.'],
         ['ask', 'Ask the repository a question', 'Anyone. Every answer cites the contract and clause it came from.']
       ];
       const ns = northStar(), it = invoiceTotals();
       return `<p class="desk">Working prototype</p><h1>Start here</h1>
-      <p class="lede">Kestrel Mobility is the invented company from the brief: 3,000 employees and about 2,500 suppliers. This prototype holds a slice of its contracts. Today in the demo is ${fmtDate(DEMO_TODAY)}.</p>
+      <p class="lede">You are in the Kestrel Mobility demo workspace: a sample company with 3,000 employees and about 2,500 suppliers, and a slice of its contracts on file. Today in the demo is ${fmtDate(DEMO_TODAY)}.</p>
       ${hero()}
       <div class="flow" aria-label="How the desks connect">
         <button class="fnode" data-act="go" data-r="inbox"><b>Inbox</b><span>Legal Operations files signed documents. AI reads, a person checks the terms that move money.</span></button>
@@ -484,11 +484,11 @@
       if (am) {
         const parent = ex.amends ? findContract(ex.amends.parentSupplier) : null;
         body = `<div class="card"><h3>This amends an existing contract</h3>
-          ${!ex.amends && R.streaming ? '<p class="thinking">Reading the changes…</p>' : parent ? `<p>Matched to <button class="lnk" data-act="open-contract" data-id="${parent.id}">${parent.id} ${esc(parent.supplier)}, ${esc(parent.title)}</button>. Changes take effect ${fmtDate(ex.amends.effectiveFrom)}.</p>` : `<p class="warnp">No contract for "${esc(ex.amends ? ex.amends.parentSupplier : ex.supplier)}" is in the repository. File the base agreement first.</p>`}
+          ${!ex.amends && R.streaming ? '<p class="thinking">Reading the changes…</p>' : !ex.amends || !ex.amends.changes.length ? '<p class="warnp">The reading did not list any changed terms, so there is nothing to apply. Go back to the inbox and read the document again.</p>' : parent ? `<p>Matched to <button class="lnk" data-act="open-contract" data-id="${parent.id}">${parent.id} ${esc(parent.supplier)}, ${esc(parent.title)}</button>. Changes take effect ${fmtDate(ex.amends.effectiveFrom)}.</p>` : `<p class="warnp">No contract for "${esc(ex.amends ? ex.amends.parentSupplier : ex.supplier)}" is in the repository. File the base agreement first.</p>`}
           ${parent && ex.amends ? `<div class="scroll"><table class="tbl"><thead><tr><th>Term</th><th>On file now</th><th>After this amendment</th><th>Source</th><th>Checked</th></tr></thead><tbody>${ex.amends.changes.map((ch, i) => {
             let was, now, label;
             if (ch.kind === 'rate') { const rt = matchRate(parent, ch.item); label = /\brate$/i.test(ch.item) ? ch.item : ch.item + ' rate'; was = rt ? money(rt.rate) : 'Not on rate card'; now = money(ch.newRate); }
-            else { const fd = FIELDS.find(f => f.k === ch.field); label = ch.label || fd.label; was = parent.f[ch.field] == null ? 'No cap or not stated' : String(parent.f[ch.field]); now = String(ch.newValue); }
+            else { const fd = FIELDS.find(f => f.k === ch.field); label = fd.label + (ch.label && ch.label.toLowerCase() !== fd.label.toLowerCase() && !fd.label.toLowerCase().startsWith(ch.label.toLowerCase()) ? ` (the AI called it "${ch.label}")` : ''); was = parent.f[ch.field] == null ? 'No cap or not stated' : (fd.type === 'money' ? money(parent.f[ch.field]) : String(parent.f[ch.field])); now = fd.type === 'money' ? money(ch.newValue) : String(ch.newValue); }
             const unread = unreadChange(ch);
             const qv = ch.quote && findSpan(R.text, ch.quote), vq = qv && !unread && valueInQuote('num', ch.kind === 'rate' ? ch.newRate : ch.newValue, ch.quote) === false;
             const prior = ch.kind === 'rate' ? (matchRate(parent, ch.item) || {}).src : (/^Set by (.+?),/.exec(parent.notes[ch.field] || '') || [])[1];
@@ -701,7 +701,7 @@
   const unreadChange = ch => (ch.kind === 'rate' ? ch.newRate : ch.newValue) == null;
   function pending() {
     const R = T.review, ex = R.ex;
-    if (ex.docType === 'amendment') { if (!ex.amends || !findContract(ex.amends.parentSupplier)) return ['parent']; return ex.amends.changes.map((c, i) => 'ch' + i).filter((k, i) => !R.ok[k] || unreadChange(ex.amends.changes[i])); }
+    if (ex.docType === 'amendment') { if (!ex.amends || !ex.amends.changes.length) return ['nochanges']; if (!findContract(ex.amends.parentSupplier)) return ['parent']; return ex.amends.changes.map((c, i) => 'ch' + i).filter((k, i) => !R.ok[k] || unreadChange(ex.amends.changes[i])); }
     return FIELDS.filter(fd => fd.crit).map(fd => fd.k).concat(['rates']).filter(k => needsCheck(k) && !R.ok[k]);
   }
   function fileBar() {
@@ -710,7 +710,7 @@
     const auto = am ? 0 : FIELDS.filter(fd => fd.crit && !R.ex.fields[fd.k].pending && !needsCheck(fd.k)).length;
     const unread = am && R.ex.amends && R.ex.amends.changes.some(unreadChange);
     return `<div class="bar filebar"><button class="btn pri" data-act="file" ${p.length || R.streaming ? 'disabled' : ''}>${am ? 'Apply amendment to the contract' : 'File in the repository'}</button>
-      <span class="sub">${R.streaming ? 'Still reading the document.' : p[0] === 'parent' ? 'The base agreement has to be filed first.' : unread ? 'A changed value could not be read. Go back to the inbox and read the document again.' : p.length ? `${p.length} ${p.length === 1 ? 'term still needs' : 'terms still need'} your check.` : 'Ready to file.'}${am || R.streaming ? '' : ` ${auto} of ${FIELDS.filter(f => f.crit).length} deadline and price terms were accepted without review.`}</span></div>`;
+      <span class="sub">${R.streaming ? 'Still reading the document.' : p[0] === 'nochanges' ? 'The reading found no changed terms. Go back to the inbox and read the document again.' : p[0] === 'parent' ? 'The base agreement has to be filed first.' : unread ? 'A changed value could not be read. Go back to the inbox and read the document again.' : p.length ? `${p.length} ${p.length === 1 ? 'term still needs' : 'terms still need'} your check.` : 'Ready to file.'}${am || R.streaming ? '' : ` ${auto} of ${FIELDS.filter(f => f.crit).length} deadline and price terms were accepted without review.`}</span></div>`;
   }
   function inputFor(fd, f) {
     const id = 'f-' + fd.k, at = `id="${id}" data-chg="field" data-k="${fd.k}" class="inp"${f.pending ? ' disabled' : ''}`;
@@ -956,17 +956,17 @@
       why: 'Accounts Payable checks each line against the rate in force for that period. Code does the arithmetic, not the model.',
       tryIt: () => filed('D-1') ? 'With the amendment filed, this invoice shows $9,486.92 flagged against the contract. Read the line notes and the service-credit finding.' : 'Before filing, this invoice shows $1,743.52 flagged. File the Fleetline amendment in the Inbox and come back: it rises to $9,486.92.' },
     { r: 'renewal', sel: { renewal: 'C-1001' }, t: '.split > div:last-child', title: 'Decide before the notice date',
-      why: 'The deadline is worked out by code from the filed terms. AI drafts the brief and the letter. A person records the decision, and nothing is sent.',
+      why: 'The deadline is worked out by code from the filed terms. AI drafts the renewal brief and the letter. A person records the decision, and nothing is sent.',
       tryIt: () => 'Pick an option, edit the draft letter, then click Record decision.' },
     { r: 'ask', also: ['contract'], t: '.sugg', title: 'Ask, and get a cited answer',
       why: 'Answers come only from the verified repository, and every claim names the contract and clause it rests on.',
       tryIt: () => (live() ? 'Type any question, or click a suggested one, and watch the answer stream in. ' : 'Click a suggested question. ') + 'Then click a citation to open the clause it came from.' },
-    { r: 'why', t: '.pos', title: 'What this prototype believes',
+    { r: 'why', t: '.pos', title: 'What Afterink believes',
       why: 'Three positions shape every screen: AI reads but code verifies, success means decisions made in time, and Accounts Payable reads the same contracts as Legal.',
       tryIt: () => 'Read the three positions, then press Next.' },
     { r: 'metrics', t: '#live-metrics', title: 'See how success is measured, including the downside',
       why: "The north star counts silence as a miss. Corvid's notice date passed before the product existed, so the score can never reach 100% on old misses, and unfiled documents count as undecided.",
-      tryIt: () => 'Check how the tiles moved with what you did, then scroll to the table of what would make me rethink the approach.' }
+      tryIt: () => 'Check how the tiles moved with what you did, then scroll to the table of what would make us rethink the approach.' }
   ];
   const TOUR = { on: false, i: 0 };
   function tourHere() {
@@ -1030,12 +1030,12 @@
 
   /* ---------- chrome and render ---------- */
   const NAV = [
-    { g: 'The working prototype', n: '4' }, { r: 'start', t: 'Start here' }, { r: 'inbox', t: 'Inbox', alias: ['review'], ct: () => S.inbox.filter(d => d.status === 'new').length },
+    { g: 'Workspace' }, { r: 'start', t: 'Start here' }, { r: 'inbox', t: 'Inbox', alias: ['review'], ct: () => S.inbox.filter(d => d.status === 'new').length },
     { r: 'repository', t: 'Repository', alias: ['contract'] }, { r: 'ask', t: 'Ask' },
     { r: 'renewals', t: 'Renewal desk', alias: ['renewal'], ct: () => renewalItems(90).filter(it => !S.decisions[it.c.id]).length },
     { r: 'invoices', t: 'Invoice check', alias: ['invoice'], ct: () => S.invoices.filter(i => !['disputed', 'approved', 'blind'].includes(i.status)).length },
-    { g: 'The case' }, { r: 'why', n: '1', t: 'Why this stage' }, { r: 'stakeholders', n: '2', t: 'Stakeholder map' }, { r: 'problem', n: '3', t: 'The problem' },
-    { g: 'The measure' }, { r: 'metrics', n: '5', t: 'Success metrics' }
+    { g: 'Why Afterink' }, { r: 'why', t: 'Why after signature' }, { r: 'stakeholders', t: 'Who it serves' }, { r: 'problem', t: 'The problem' },
+    { r: 'metrics', t: 'Measuring success' }
   ];
   /* The strip under the top band: which model is live, and every call made in this session. */
   function strip() {

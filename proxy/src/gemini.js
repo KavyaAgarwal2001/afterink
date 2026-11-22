@@ -76,14 +76,14 @@ export async function* run(spec, env) {
   /* One HTTP attempt per model: the fallback list does the retrying, so a busy model costs seconds,
      not the SDK's half-minute of backoff. */
   const ai = new GoogleGenAI({ apiKey: env.GEMINI_API_KEY, httpOptions: { timeout: TOTAL_MS + 5000, retryOptions: { attempts: 1 } } });
-  /* Two passes over the list. Free-tier demand spikes are usually short, so when every model is busy,
-     a pause of a few seconds and a second pass gets most calls through. A model missing for this key
-     (404) is skipped on the second pass. */
+  /* Up to three passes over the list. Free-tier demand spikes are usually short, so when every model is
+     busy, a pause (3 seconds, then 6) and another pass gets most calls through. A model missing for this
+     key (404) is skipped on later passes. */
   const PAUSE_MS = Number(env.GEMINI_RETRY_PAUSE_MS) || 3000;
   const missing = new Set();
   let lastErr = null;
-  for (let pass = 0; pass < 2; pass++) {
-    if (pass) { console.error('gemini: every model busy, trying again in', PAUSE_MS, 'ms'); await new Promise(r => setTimeout(r, PAUSE_MS)); }
+  for (let pass = 0; pass < 3; pass++) {
+    if (pass) { console.error('gemini: every model busy, trying again in', PAUSE_MS, 'ms'); await new Promise(r => setTimeout(r, PAUSE_MS * pass)); }
     for (let i = 0; i < models.length; i++) {
       if (missing.has(models[i])) continue;
       let started = false;

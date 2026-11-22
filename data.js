@@ -391,7 +391,7 @@ Signed for Fleetline Logistics LLC and Kestrel Mobility Ltd. on 22 September 202
         risks: ['Overtime is billable only with written approval in advance (§4). Nothing records those approvals today.', 'A 15% conversion fee applies if a contractor is hired within six months (§5).'],
         values: {
           effective: ['2026-05-01', 'high'], termEnd: ['2027-04-30', 'high'], autoRenew: [true, 'high'], renewalMonths: [12, 'high'], noticeDays: [60, 'high'],
-          upliftText: ['Bill rates change only by signed amendment', 'high'], upliftPct: [0, 'medium', 'My reading: no increase without a signed amendment. The contract gives no percentage.'],
+          upliftText: ['Bill rates change only by signed amendment', 'high'], upliftPct: [0, 'medium', 'Interpreted: no increase without a signed amendment. The contract gives no percentage.'],
           annualValue: [null, 'low', 'Not stated. Spend depends on hours billed. Finance estimate from invoices so far: about USD 1,100,000 a year.'],
           paymentDays: [30, 'high'], sla: ['Free replacement of a rejected contractor within the first 10 working days', 'high'],
           liabilityCap: ['Fees paid in the preceding 12 months', 'high'], noticeMethod: ['Email to legal@talentbridge.example', 'high'], law: ['New York', 'high'],
@@ -430,7 +430,7 @@ Between Talentbridge Staffing Inc. ("Agency") and Kestrel Mobility Ltd. ("Client
         summary: 'A two-page letter for running the staff canteen at a price per meal. It leaves most commercial protections unstated.',
         risks: ['Price increases have no cap and need no agreement (§2).', 'The notice period is "reasonable notice", with no number of days (§3).', 'No liability clause and no governing law.'],
         values: {
-          effective: ['2025-01-06', 'high'], termEnd: ['2027-01-05', 'low', 'No end date is written. The letter runs year to year from 6 January, so the next anniversary is my reading.'],
+          effective: ['2025-01-06', 'high'], termEnd: ['2027-01-05', 'low', 'No end date is written. The letter runs year to year from 6 January, so the next anniversary is an interpretation.'],
           autoRenew: [true, 'medium', 'The letter says it "carries on from year to year". That works like automatic renewal.'], renewalMonths: [12, 'medium'],
           noticeDays: [null, 'low', 'The letter says "reasonable notice" and gives no number of days.'],
           upliftText: ['Supplier may pass on increases in food costs', 'high'], upliftPct: [null, 'low', 'No cap is stated.'],
@@ -501,7 +501,7 @@ Total due: $45,090.00
 Payment terms: 14 days`;
 
   const SUGGESTED = [
-    { id: 'q1', q: 'Which contracts renew automatically in the next 90 days, and what do we have to do to stop each one?' },
+    { id: 'q1', q: 'Which contracts have a notice deadline in the next 90 days, and what do we have to do to stop each one renewing?' },
     { id: 'q2', q: 'Which suppliers can raise their prices without any cap?' },
     { id: 'q3', q: 'What are we owed when BrightClean misses its audit score?' },
     { id: 'q4', q: 'Where is a supplier\'s liability limited to less than 12 months of fees?' }

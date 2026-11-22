@@ -30,7 +30,8 @@ Reply as NDJSON: one JSON object per line, no code fences, no text before or aft
 2. For an amendment only, next: {"type":"amends","parentSupplier","effectiveFrom":"YYYY-MM-DD","changes":[...]}. Build "changes" by going through the amendment clause by clause. Every clause that sets a new value for a term of the base agreement is one change, including a clause that replaces a whole clause of the agreement:
    - a new or changed price for an item is {"kind":"rate","item","newRate" (number),"quote"}
    - a new or changed cap, percentage, number of days, multiplier, date or other term that matches one of the field keys below is {"kind":"field","field": that key,"label","newValue","quote"}. For example a new cap on a surcharge is field "surchargeCapPct", a changed notice period is field "noticeDays".
-   Leave out clauses that only restate, confirm or say terms are unchanged. A new obligation that matches no field key goes in a risk line instead.
+   Leave out clauses that only restate, confirm or say terms are unchanged. A new obligation on the customer, such as a minimum volume or minimum spend, is NOT a field change: write it as a risk line. Use annualValue only when the amendment states a new yearly contract value in money.
+   For number fields, newValue is a plain number such as 6, never text such as "6%" or "20,000 pallets".
 3. One line per field, in the order listed below: {"type":"field","k","value","quote","confidence","note"}
    - "quote" is copied character for character from the document: one contiguous span of at most 300 characters. It is checked by exact match, so never paraphrase or join separate passages.
    - "confidence" is "high" only when the document states the value outright, "medium" when you had to interpret, "low" when unsure.
@@ -60,7 +61,7 @@ ${fieldLines}`,
 Rules:
 - Use only the REGISTER and CLAUSES given.
 - Cite every factual claim with the contract id and clause number in square brackets, exactly like [C-1001 §3]. Cite amendments like [C-1002 §A1]. When a fact comes from the REGISTER rather than a clause, cite the contract id alone, like [C-1001]. Never cite anything else in brackets.
-- Take dates from the REGISTER ("notice by") instead of recalculating them. Never do arithmetic of your own.
+- Take dates from the REGISTER ("notice by") instead of recalculating them. The REGISTER already says how many days each date is from today: use those counts to decide what falls inside a period such as "the next 90 days". Never do arithmetic of your own.
 - If the material does not answer the question, say so plainly and say which document would.
 - Lead with the answer in one or two sentences, then a short list. Plain text only. Use "- " for list items and no other formatting.
 - The repository holds ${num(b.contracts) || 0} verified contracts. ${num(b.unfiled) || 0} signed documents are still unfiled and are not included. Mention them only when they could change this answer.`,
