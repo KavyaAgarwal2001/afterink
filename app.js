@@ -1029,13 +1029,31 @@
   });
 
   /* ---------- chrome and render ---------- */
+  /* Line icons, drawn inline so they need nothing to load and take the colour of the text around them. */
+  const ICON = {
+    home: '<path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/><path d="M10 21v-6h4v6"/>',
+    inbox: '<path d="M22 12h-6l-2 3h-4l-2-3H2"/><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/>',
+    archive: '<rect x="3" y="4" width="18" height="5" rx="1"/><path d="M5 9v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V9"/><path d="M10 13h4"/>',
+    chat: '<path d="M20 15a2 2 0 0 1-2 2H8l-4 4V5a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2z"/><path d="M8 9h8M8 13h5"/>',
+    calendar: '<rect x="3" y="4" width="18" height="17" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/><path d="M12 14v3l2 1"/>',
+    receipt: '<path d="M5 3h14v18l-3-2-2 2-2-2-2 2-2-2-3 2z"/><path d="M9 8h6M9 12h6M9 16h3"/>',
+    pen: '<path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/>',
+    users: '<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/>',
+    alert: '<path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><path d="M12 9v4M12 17h.01"/>',
+    target: '<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.5"/>',
+    sun: '<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/>',
+    moon: '<path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9z"/>',
+    play: '<circle cx="12" cy="12" r="9"/><path d="m10 8.5 5.5 3.5-5.5 3.5z"/>',
+    reset: '<path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/>'
+  };
+  const icon = name => ICON[name] ? `<svg class="ic" viewBox="0 0 24 24" aria-hidden="true" focusable="false">${ICON[name]}</svg>` : '';
   const NAV = [
-    { g: 'Workspace' }, { r: 'start', t: 'Start here' }, { r: 'inbox', t: 'Inbox', alias: ['review'], ct: () => S.inbox.filter(d => d.status === 'new').length },
-    { r: 'repository', t: 'Repository', alias: ['contract'] }, { r: 'ask', t: 'Ask' },
-    { r: 'renewals', t: 'Renewal desk', alias: ['renewal'], ct: () => renewalItems(90).filter(it => !S.decisions[it.c.id]).length },
-    { r: 'invoices', t: 'Invoice check', alias: ['invoice'], ct: () => S.invoices.filter(i => !['disputed', 'approved', 'blind'].includes(i.status)).length },
-    { g: 'Why Afterink' }, { r: 'why', t: 'Why after signature' }, { r: 'stakeholders', t: 'Who it serves' }, { r: 'problem', t: 'The problem' },
-    { r: 'metrics', t: 'Measuring success' }
+    { g: 'Workspace' }, { r: 'start', t: 'Start here', ic: 'home' }, { r: 'inbox', t: 'Inbox', ic: 'inbox', alias: ['review'], ct: () => S.inbox.filter(d => d.status === 'new').length },
+    { r: 'repository', t: 'Repository', ic: 'archive', alias: ['contract'] }, { r: 'ask', t: 'Ask', ic: 'chat' },
+    { r: 'renewals', t: 'Renewal desk', ic: 'calendar', alias: ['renewal'], ct: () => renewalItems(90).filter(it => !S.decisions[it.c.id]).length },
+    { r: 'invoices', t: 'Invoice check', ic: 'receipt', alias: ['invoice'], ct: () => S.invoices.filter(i => !['disputed', 'approved', 'blind'].includes(i.status)).length },
+    { g: 'Why Afterink' }, { r: 'why', t: 'Why after signature', ic: 'pen' }, { r: 'stakeholders', t: 'Who it serves', ic: 'users' }, { r: 'problem', t: 'The problem', ic: 'alert' },
+    { r: 'metrics', t: 'Measuring success', ic: 'target' }
   ];
   /* The strip under the top band: which model is live, and every call made in this session. */
   function strip() {
@@ -1059,7 +1077,7 @@
     }
     const chipEl = $('#ai-chip');
     if (chipEl) { chipEl.className = 'chip ' + (AI.state === 'live' ? 'good' : 'mute'); chipEl.textContent = AI.state === 'live' ? `AI: live, ${AI.modelName || AI.model}` : AI.state === 'off' ? 'AI: saved results' : 'AI: checking'; }
-    $('#nav').innerHTML = NAV.map(n => n.g ? `<p class="ng">${n.n ? `<span class="nn">${n.n}</span>` : ''}${n.g}</p>` : `<a class="nl${S.route === n.r || (n.alias || []).includes(S.route) ? ' on' : ''}" href="#${n.r}">${n.n ? `<span class="nn">${n.n}</span>` : ''}<span>${n.t}</span>${n.ct && n.ct() ? `<span class="ct">${n.ct()}</span>` : ''}</a>`).join('');
+    $('#nav').innerHTML = NAV.map(n => n.g ? `<p class="ng">${n.n ? `<span class="nn">${n.n}</span>` : ''}${n.g}</p>` : `<a class="nl${S.route === n.r || (n.alias || []).includes(S.route) ? ' on' : ''}" href="#${n.r}">${n.n ? `<span class="nn">${n.n}</span>` : ''}${icon(n.ic)}<span>${n.t}</span>${n.ct && n.ct() ? `<span class="ct">${n.ct()}</span>` : ''}</a>`).join('');
   }
   let lastRoute = null;
   function render() {
@@ -1098,7 +1116,10 @@
      remembered in their browser. The page sets the mode before it first paints (see index.html). */
   function themeButton() {
     const light = document.documentElement.dataset.theme === 'light', b = $('#theme-btn');
-    if (b) { b.textContent = light ? 'Dark mode' : 'Light mode'; b.setAttribute('aria-pressed', String(light)); }
+    if (b) { b.innerHTML = light ? icon('moon') + 'Dark mode' : icon('sun') + 'Light mode'; b.setAttribute('aria-pressed', String(light)); }
+    const tb = $('#tour-btn'), rb = $('#reset-btn');
+    if (tb && !tb.querySelector('svg')) tb.insertAdjacentHTML('afterbegin', icon('play'));
+    if (rb && !rb.querySelector('svg')) rb.insertAdjacentHTML('afterbegin', icon('reset'));
   }
   Object.assign(ACT, {
     'theme-toggle'() {

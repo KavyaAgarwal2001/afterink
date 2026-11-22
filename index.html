@@ -401,6 +401,14 @@ h3{font-weight:700;font-size:11px;letter-spacing:.14em;color:var(--teal)}
 [data-theme="light"] .glowpill{color:var(--ink)}
 [data-theme="light"] .glowpill::after{background:#FBF7FC}
 @keyframes rotateBorder{to{transform:rotate(360deg)}}
+/* Icons in the menu and the top-bar buttons */
+.ic{width:18px;height:18px;flex:none;fill:none;stroke:currentColor;stroke-width:1.75;stroke-linecap:round;stroke-linejoin:round}
+.nl .ic{opacity:.8}
+.nl.on .ic{opacity:1}
+.nl{gap:10px}
+.btn .ic{width:15px;height:15px;vertical-align:-3px;margin-right:6px}
+.btn:has(.ic){display:inline-flex;align-items:center}
+@media (max-width:860px){.nl .ic{width:16px;height:16px}}
 @media (prefers-reduced-motion:reduce){.glowpill::before{animation:none}}
 </style>
 
