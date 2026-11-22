@@ -451,13 +451,102 @@ main>.glowpill::after{background:var(--bg)}
 .btn:has(.ic){display:inline-flex;align-items:center}
 @media (max-width:860px){.nl .ic{width:16px;height:16px}}
 @media (prefers-reduced-motion:reduce){.glowpill::before{animation:none}}
+
+/* ---------- Readability pass ----------
+   The page uses the full width, one slim header, softer secondary text, calmer surfaces and fewer
+   repeated labels. Colours stay in the sirion.ai family; purple is kept for main actions. */
+body{font-size:16px;line-height:1.6}
+.wrap{max-width:none;margin:0;padding:0}
+.app{grid-template-columns:248px minmax(0,1fr);gap:0;align-items:stretch;min-height:calc(100vh - 92px)}
+main{padding:36px clamp(20px,4vw,56px) 56px;max-width:1320px}
+.aibar{margin:16px clamp(20px,4vw,56px) 0;max-width:none}
+.foot{margin:0;padding:18px clamp(20px,4vw,56px) 28px;border-top:1px solid var(--line)}
+.band-in{max-width:none;padding-block:10px;padding-left:clamp(16px,2vw,28px);padding-right:clamp(16px,2vw,28px)}
+.announce{font-size:13px}
+.announce-in{max-width:none;padding-block:6px;padding-left:clamp(16px,2vw,28px);padding-right:clamp(16px,2vw,28px)}
+/* the side menu: a full-height column, not a floating box */
+.side{position:sticky;top:0;align-self:start;height:100vh;overflow:auto;background:transparent;border-radius:0;border-right:1px solid var(--line);padding:26px 14px 28px;gap:2px}
+.side .ng{color:var(--label);font-size:11px;letter-spacing:.12em;margin:22px 0 6px;padding:0 10px}
+.side .nl{color:var(--soft);font-size:14px;padding:8px 10px;border-left:2px solid transparent;border-radius:0 8px 8px 0}
+.side .nl:hover{background:var(--hover)}
+.side .nl.on{background:var(--accent-soft);color:var(--ink);border-left-color:var(--accent);font-weight:500}
+.side .nl .ic{opacity:.75}
+.side .nl.on .ic{opacity:1;color:var(--accent-text)}
+.side .ct,.side .nl.on .ct{background:transparent;color:var(--soft);border:1px solid var(--line);font-weight:500}
+/* type: large light headings, soft secondary text */
+h1{font-size:clamp(30px,3.2vw,42px);line-height:1.15;font-weight:300;letter-spacing:-.02em;max-width:24em;margin-bottom:14px}
+h2{font-size:24px;font-weight:300;letter-spacing:-.01em;margin:44px 0 10px}
+h3{color:var(--label)}
+.lede{font-size:18px;line-height:1.6;color:var(--soft);max-width:68ch}
+.sub,.fnote,.ts,.tl{color:var(--muted)}
+.card p,.leak p,.legend p,.teamcard>span:last-child,.steps p{color:var(--soft)}
+.desk{color:var(--label)}
+/* surfaces: one calm card style */
+.card,.tile,.leak,.legend>div,.teamcard,.steps li,.fnode,.finding,.scroll{background:var(--surface);border:1px solid var(--line);border-radius:14px;box-shadow:none}
+.card{padding:22px 24px}
+.callout,.note,.aistrip,.findbox{background:var(--sunk);border:1px solid var(--line);color:var(--soft)}
+.tbl th{color:var(--label)}
+.tbl td{border-color:var(--line)}
+/* the team label: one quiet line, not a box */
+.team{background:transparent;border:0;padding:0;margin:0 0 10px;align-items:center;gap:10px}
+.team-ic{width:28px;height:28px;border-radius:8px;background:var(--sunk);color:var(--accent-text)}
+.team-ic .ic{width:16px;height:16px}
+.team b{font:600 11px var(--f-ui);letter-spacing:.12em;text-transform:uppercase;color:var(--label)}
+.team .team-who{color:var(--muted)}
+.team p{display:none}
+/* output tags: outlined and quiet */
+.tag{background:transparent!important;border:1px solid var(--line)!important;font-size:11.5px;padding:2px 8px 2px 6px}
+.tag-ai{color:var(--accent-text)}
+.tag-code{color:var(--code-text)}
+.tag-you{color:var(--you-text)}
+.tag.mini{padding:3px;width:24px;height:24px;justify-content:center;border-radius:50%}
+.tag.mini .ic{width:13px;height:13px}
+.leak-steps li{flex-wrap:nowrap;align-items:flex-start;gap:8px}
+.leak-steps li>span:last-child{flex:1 1 auto}
+/* the AI chip opens the call log; the log is hidden until asked for */
+.aichip{border:0;font:inherit;font-size:12px;cursor:pointer}
+.aistrip{margin:12px clamp(20px,4vw,56px) 0;border-radius:12px}
+/* contracts: a calm reading surface in both modes */
+.doc{font-size:15.5px;line-height:1.75;border-radius:12px}
+@media (max-width:860px){
+  .app{grid-template-columns:minmax(0,1fr)}
+  .side{position:static;height:auto;flex-direction:row;overflow-x:auto;border-right:0;border-bottom:1px solid var(--line);padding:8px 12px}
+  .side .nl{border-left:0;border-radius:8px;background:var(--sunk);white-space:nowrap}
+  .side .nl.on{background:var(--accent-soft)}
+  main{padding:24px 16px 48px}
+}
+
+.dia,.quad{border-radius:14px}
+.d-box{fill:var(--sunk)}
+/* Night: the sirion.ai navy, with lighter navy-teal surfaces so cards are easy on the eyes */
+:root[data-theme="night"]{--bg:#0C1B24;--surface:#112832;--sunk:#0F232C;--line:rgba(180,205,208,.13);--hover:rgba(180,205,208,.06);
+  --ink:#EEF3F4;--soft:#BCCED2;--muted:#8EA6AC;--label:#7FB0B7;--accent:#92429F;--accent-hover:#A552B3;--accent-soft:rgba(146,66,159,.16);
+  --accent-text:#D3A3DC;--code-text:#9CCFD6;--you-text:#EBC57A;--band:#0A1820;--mark:rgba(211,163,220,.22);--mark-ink:#FFFFFF}
+[data-theme="night"] body{background:var(--bg)}
+[data-theme="night"] .band{background:var(--band);border-bottom:1px solid var(--line)}
+[data-theme="night"] .side{background:transparent;border-color:var(--line)}
+[data-theme="night"] .doc{background:#132E38;color:#E3ECEE}
+[data-theme="night"] .doc mark.hl{background:var(--mark);color:#FFFFFF}
+[data-theme="night"] .d-box{fill:#173541}
+[data-theme="night"] .quad>div{background:var(--surface)}
+[data-theme="night"] .tile.star{background:var(--surface);border-color:var(--accent)}
+[data-theme="night"] .tile.star .tl,[data-theme="night"] .tile.star .ts{color:var(--muted)}
+/* Light: white surfaces on a soft grey-teal page */
+:root[data-theme="light"]{--bg:#F4F7F8;--surface:#FFFFFF;--sunk:#EEF3F4;--line:#DFE7E9;--hover:#EEF3F4;
+  --ink:#0B1821;--soft:#3D4A52;--muted:#5E6C73;--label:#2F6B73;--accent:#92429F;--accent-soft:#F4EAF6;
+  --accent-text:#7A3487;--code-text:#1E6770;--you-text:#8A5A00;--mark:#EAD6EE}
+[data-theme="light"] .side{background:transparent}
+[data-theme="light"] .side .nl{color:var(--soft)}
+[data-theme="light"] .side .nl.on{background:var(--accent-soft);color:var(--ink)}
+[data-theme="light"] .side .ct{background:transparent;color:var(--soft)}
+[data-theme="light"] .tile.star{background:var(--surface);color:var(--ink);border-color:var(--accent)}
 </style>
 
 <div class="announce" id="announce"><div class="announce-in"><p><b>Live AI prototype.</b> Every term the AI reads is checked by code before anyone relies on it.</p><button class="lnk" data-act="tour-start">Take the two-minute tour &#8594;</button><button class="announce-x" data-act="announce-x" aria-label="Hide this message">&#215;</button></div></div>
 <header class="band">
   <div class="band-in">
     <div class="brand"><b>Afterink</b><span>Catch the deadlines and overcharges hidden in your signed contracts</span></div>
-    <div class="topr"><span>Demo date <span class="mono" id="demo-date"></span></span><span class="chip mute" id="ai-chip">Claude: checking</span><button class="btn sm ghost" data-act="theme-toggle" id="theme-btn" aria-pressed="false">Light mode</button><button class="btn sm light" data-act="tour-start" id="tour-btn">Guided tour</button><button class="btn sm ghost" data-act="reset-ask" id="reset-btn">Reset demo</button></div>
+    <div class="topr"><span>Demo date <span class="mono" id="demo-date"></span></span><button class="chip mute aichip" id="ai-chip" data-act="ai-log" title="Show every AI call made in this session">AI: checking</button><button class="btn sm ghost" data-act="theme-toggle" id="theme-btn" aria-pressed="false">Light mode</button><button class="btn sm light" data-act="tour-start" id="tour-btn">Guided tour</button><button class="btn sm ghost" data-act="reset-ask" id="reset-btn">Reset demo</button></div>
     <div class="confirm" id="reset-confirm" role="dialog" aria-label="Reset demo" hidden><p>Restore the demo to its starting state? Anything you filed, decided or disputed is cleared.</p><div class="bar"><button class="btn sm pri" data-act="reset" id="reset-yes">Reset</button><button class="btn sm" data-act="reset-cancel">Cancel</button></div></div>
   </div>
 </header>

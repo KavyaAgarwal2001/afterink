@@ -394,6 +394,7 @@
     you: ['usercheck', 'Your decision', 'This commits the company or affects a supplier, so a named person decides. Nothing is sent automatically.']
   };
   const tag = (k, label) => `<span class="tag tag-${k}" title="${esc(TAG[k][2])}">${icon(TAG[k][0])}${esc(label || TAG[k][1])}</span>`;
+  const tagMini = k => `<span class="tag mini tag-${k}" title="${esc(TAG[k][1] + '. ' + TAG[k][2])}" aria-label="${esc(TAG[k][1])}">${icon(TAG[k][0])}</span>`;
   const aiNote = () => live() ? '' : `<p class="note">${AI.state === 'checking' ? 'Checking whether the AI server is reachable.' : `The live AI is off because ${WHY_OFF[AI.why] || WHY_OFF.offline}, so this page replays saved AI results. The checks, dates and sums still run live in your browser.`}</p>`;
   const PASTE_NOTE = 'Text you paste here is sent to the AI model through this demo\'s server, which runs on a free key whose provider may keep what it receives. Paste only public or sample documents.';
   const readingNow = () => !!(T.review && T.review.streaming);
@@ -443,7 +444,7 @@
       const flInv = S.invoices.find(i => i.id === 'FL-20931'), flR = checkInvoice(flInv), flFiled = filed('D-1');
       const bcInv = S.invoices.find(i => i.id === 'BC-1187'), bcR = checkInvoice(bcInv), bc = getC('C-1003');
       const bcAct = bc && bc.perf ? bc.perf[bcInv.period] : null;
-      const step = (team, k, text) => `<li><span class="lk-team">${esc(team)}</span>${tag(k)}<span>${text}</span></li>`;
+      const step = (team, k, text) => `<li>${tagMini(k)}<span><b class="lk-team">${esc(team)}</b> ${text}</span></li>`;
       const leak = (o) => `<article class="leak"><div class="leak-h"><span class="leak-ic">${icon(o.ic)}</span><div><span class="leak-n">Leak ${o.n}</span><h3>${o.title}</h3></div></div>
         <p class="leak-k">Where it happens today</p><p>${o.today}</p>
         <p class="leak-k">What it costs</p><p class="leak-cost">${o.cost}</p>
@@ -504,7 +505,6 @@
       </li>`).join('');
       return `${deskTag('legal')}<h1>Inbox</h1>
       <p class="lede">Signed documents that exist somewhere in the company but are not in the repository. Until one is filed, nobody downstream can act on it.</p>
-      <p class="tags">${tag('ai', 'AI reads each document')} ${tag('code', 'Code checks every quote')} ${tag('you', 'You confirm and file')}</p>
       <p class="sub"><b>How documents get here without anyone remembering to file.</b> Where an e-signature tool is used, the signed copy arrives on its own. Everyone else forwards a signed copy to one address. Each week the ledger lists suppliers that were paid with no filed contract, and Legal Operations goes looking. The three below are the kind that sweep turns up: an attachment in a mailbox, a file on a team drive, a scanned letter.</p>
       ${aiNote()}
       <ul class="doclist">${rows}</ul>
@@ -612,7 +612,6 @@
       const ns = northStar();
       return `${deskTag('proc')}<h1>Renewal desk</h1>
       <p class="lede">Every contract with a date that costs money if it passes unseen, ordered by the last day someone can still act.</p>
-      <p class="tags">${tag('code', 'Deadlines calculated by code')} ${tag('ai', 'Briefs and letters drafted by AI')} ${tag('you', 'You decide each renewal')}</p>
       <div class="tiles">
         <div class="tile"><span class="tl">Decided before the deadline</span><span class="tn">${ns.onTime} of ${ns.due}</span><span class="ts">dates falling in the next 90 days${ns.unfiled ? `. ${ns.unfiled} of them are unfiled documents, counted as undecided until filed` : ''}</span></div>
         <div class="tile"><span class="tl">Renews if nobody acts</span><span class="tn">${money(atStake)}</span><span class="ts">committed spend, next 90 days, undecided</span></div>
@@ -665,7 +664,6 @@
       const t = invoiceTotals();
       return `${deskTag('fin')}<h1>Invoice check</h1>
       <p class="lede">Each invoice line is compared with the price in the signed contract before anyone pays it.</p>
-      <p class="tags">${tag('code', 'Every line compared by code')} ${tag('ai', 'Pasted invoices and dispute letters by AI')} ${tag('you', 'You decide what to pay')}</p>
       <div class="tiles">
         <div class="tile"><span class="tl">Billed above contract</span><span class="tn">${money(t.flagged)}</span><span class="ts">across ${S.invoices.length} invoices worth ${money(t.total)}</span></div>
         <div class="tile"><span class="tl">Held under dispute</span><span class="tn">${money(t.held)}</span><span class="ts">approved by Accounts Payable</span></div>
@@ -1133,15 +1131,17 @@
   function strip() {
     const el = $('#ai-strip'); if (!el) return;
     const calls = AI.calls;
-    if (AI.state !== 'live' && !calls.length) { el.hidden = true; return; }
+    const running = calls.some(c => c.status === 'running'), chipEl = $('#ai-chip');
+    if (chipEl && AI.state === 'live') chipEl.textContent = `AI: live, ${AI.modelName || AI.model}${running ? ' · working…' : ''}`;
+    if (!T.showLog) { el.hidden = true; return; }
     el.hidden = false;
     const last = calls[0];
     const lastText = !last ? '' : ` Last call: ${esc(last.label.toLowerCase())}, ${last.status === 'running' ? 'running…' : last.status === 'failed' ? 'failed. ' + esc(AI_COPY[last.err] || last.err) : fmtMs(last.ms) + (last.in != null ? `, ${(last.in + last.out).toLocaleString('en-US')} tokens` : '') + '.'}`;
     const head = AI.state === 'live'
       ? `<b>Live AI: ${esc(AI.modelName || AI.model || '')}</b>, through a small server that holds the key${AI_URL_OVERRIDE ? ` (test server ${esc(AI_URL_OVERRIDE)})` : ''}. The page sends data, the server holds the prompts, and the model never does the arithmetic. ${calls.length ? `${calls.length} call${calls.length === 1 ? '' : 's'} this session.` : 'No calls yet.'}`
       : `<b>AI calls this session: ${calls.length}.</b>`;
-    el.innerHTML = `<div class="aistrip-in"><span>${head}${lastText}</span>${calls.length ? `<button class="lnk" data-act="ai-log">${T.showLog ? 'Hide the log' : 'Show the log'}</button>` : ''}</div>
-      ${T.showLog && calls.length ? `<div class="scroll ailog"><table class="tbl mini"><thead><tr><th>Call</th><th>Status</th><th class="num">Time</th><th class="num">Sent</th><th class="num">Tokens in</th><th class="num">Tokens out</th><th>Model</th></tr></thead><tbody>${calls.map(c => `<tr><td>${esc(c.label)}</td><td>${c.status === 'done' ? chip('good', c.truncated ? 'Done, cut short' : 'Done') : c.status === 'running' ? chip('info', 'Running') : chip('crit', 'Failed')}</td><td class="num">${c.ms ? fmtMs(c.ms) : '—'}</td><td class="num">${c.chars.toLocaleString('en-US')} chars</td><td class="num">${c.in != null ? c.in.toLocaleString('en-US') : '—'}</td><td class="num">${c.out != null ? c.out.toLocaleString('en-US') : '—'}</td><td>${esc(c.model || '')}</td></tr>`).join('')}</tbody></table></div>` : ''}`;
+    el.innerHTML = `<div class="aistrip-in"><span>${head}${lastText}</span><button class="lnk" data-act="ai-log">Hide</button></div>
+      ${calls.length ? `<div class="scroll ailog"><table class="tbl mini"><thead><tr><th>Call</th><th>Status</th><th class="num">Time</th><th class="num">Sent</th><th class="num">Tokens in</th><th class="num">Tokens out</th><th>Model</th></tr></thead><tbody>${calls.map(c => `<tr><td>${esc(c.label)}</td><td>${c.status === 'done' ? chip('good', c.truncated ? 'Done, cut short' : 'Done') : c.status === 'running' ? chip('info', 'Running') : chip('crit', 'Failed')}</td><td class="num">${c.ms ? fmtMs(c.ms) : '—'}</td><td class="num">${c.chars.toLocaleString('en-US')} chars</td><td class="num">${c.in != null ? c.in.toLocaleString('en-US') : '—'}</td><td class="num">${c.out != null ? c.out.toLocaleString('en-US') : '—'}</td><td>${esc(c.model || '')}</td></tr>`).join('')}</tbody></table></div>` : ''}`;
   }
   function chrome() {
     const bar = $('#ai-bar');
@@ -1150,7 +1150,7 @@
       if (AI.state === 'off') bar.innerHTML = `<b>The live AI is off: ${esc(WHY_OFF[AI.why] || WHY_OFF.offline)}.</b> This page is replaying saved AI results, prepared in advance from these same documents. The checks, dates and invoice sums still run live in your browser.${AI.why === 'unset' ? '' : ' Reload the page to try again later.'}`;
     }
     const chipEl = $('#ai-chip');
-    if (chipEl) { chipEl.className = 'chip ' + (AI.state === 'live' ? 'good' : 'mute'); chipEl.textContent = AI.state === 'live' ? `AI: live, ${AI.modelName || AI.model}` : AI.state === 'off' ? 'AI: saved results' : 'AI: checking'; }
+    if (chipEl) { chipEl.className = 'chip aichip ' + (AI.state === 'live' ? 'good' : 'mute'); chipEl.textContent = AI.state === 'live' ? `AI: live, ${AI.modelName || AI.model}` : AI.state === 'off' ? 'AI: saved results' : 'AI: checking'; }
     $('#nav').innerHTML = NAV.map(n => n.g ? `<p class="ng">${n.n ? `<span class="nn">${n.n}</span>` : ''}${n.g}</p>` : `<a class="nl${S.route === n.r || (n.alias || []).includes(S.route) ? ' on' : ''}" href="#${n.r}">${n.n ? `<span class="nn">${n.n}</span>` : ''}${icon(n.ic)}<span>${n.t}</span>${n.ct && n.ct() ? `<span class="ct">${n.ct()}</span>` : ''}</a>`).join('');
   }
   let lastRoute = null;
