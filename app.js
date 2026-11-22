@@ -394,7 +394,6 @@
     you: ['usercheck', 'Your decision', 'This commits the company or affects a supplier, so a named person decides. Nothing is sent automatically.']
   };
   const tag = (k, label) => `<span class="tag tag-${k}" title="${esc(TAG[k][2])}">${icon(TAG[k][0])}${esc(label || TAG[k][1])}</span>`;
-  const tagMini = k => `<span class="tag mini tag-${k}" title="${esc(TAG[k][1] + '. ' + TAG[k][2])}" aria-label="${esc(TAG[k][1])}">${icon(TAG[k][0])}</span>`;
   const aiNote = () => live() ? '' : `<p class="note">${AI.state === 'checking' ? 'Checking whether the AI server is reachable.' : `The live AI is off because ${WHY_OFF[AI.why] || WHY_OFF.offline}, so this page replays saved AI results. The checks, dates and sums still run live in your browser.`}</p>`;
   const PASTE_NOTE = 'Text you paste here is sent to the AI model through this demo\'s server, which runs on a free key whose provider may keep what it receives. Paste only public or sample documents.';
   const readingNow = () => !!(T.review && T.review.streaming);
@@ -444,32 +443,27 @@
       const flInv = S.invoices.find(i => i.id === 'FL-20931'), flR = checkInvoice(flInv), flFiled = filed('D-1');
       const bcInv = S.invoices.find(i => i.id === 'BC-1187'), bcR = checkInvoice(bcInv), bc = getC('C-1003');
       const bcAct = bc && bc.perf ? bc.perf[bcInv.period] : null;
-      const step = (team, k, text) => `<li>${tagMini(k)}<span><b class="lk-team">${esc(team)}</b> ${text}</span></li>`;
       const leak = (o) => `<article class="leak"><div class="leak-h"><span class="leak-ic">${icon(o.ic)}</span><div><span class="leak-n">Leak ${o.n}</span><h3>${o.title}</h3></div></div>
-        <p class="leak-k">Today</p><p>${o.today}</p>
+        <p class="leak-today">${o.today}</p>
         <p class="leak-cost">${o.cost}</p>
-        <p class="leak-k">With Afterink</p><ol class="leak-steps">${o.steps.join('')}</ol>
         <div class="bar"><button class="btn pri" data-act="walk" data-w="${o.w}">${icon('play')}Show me, step by step</button></div></article>`;
       const ns = northStar(), t = invoiceTotals();
       return `<span class="glowpill">Afterink &#183; AI contract repository</span>
       <h1>Afterink catches the deadlines and overcharges hidden in signed contracts.</h1>
       <p class="lede">Afterink reads signed contracts with AI and puts every deadline and price in front of the team that must act on it.</p>
-      <p class="facts"><span>Live demo</span><span>Sample company: Kestrel Mobility</span><span>Nothing is ever sent</span><span>Demo date ${fmtDate(DEMO_TODAY)}</span></p>
+      <p class="facts-line">Live demo on a sample company, Kestrel Mobility. Nothing is ever sent.</p>
 
       <h2>Three ways money leaks out of signed contracts</h2>
       <div class="leaks">
         ${leak({ n: 1, ic: 'clock', w: 'renewal', r: 'renewals', desk: 'the Renewal desk', title: 'A contract renews because nobody said no in time',
           today: cm ? `Cloudmetric renews for a year unless told no by ${fmtDate(noticeBy(cm))}. That date is buried in clause 3 of a PDF.` : '',
-          cost: dec ? `Decided: ${esc((choicesFor(ri).find(x => x[0] === dec.choice) || ['', dec.choice])[1].toLowerCase())}.` : ri ? `<b>${money(ri.commit)}</b> renews in <b>${ri.left} days</b>, with up to <b>${money(ri.uplift)}</b> more.` : '',
-          steps: [step('Buying team', 'code', 'sees the last day to say no'), step('Buying team', 'ai', 'gets a brief and a draft letter'), step('Buying team', 'you', 'decides: renew, renegotiate or leave')] })}
+          cost: dec ? `Decided: ${esc((choicesFor(ri).find(x => x[0] === dec.choice) || ['', dec.choice])[1].toLowerCase())}.` : ri ? `<b>${money(ri.commit)}</b> renews in <b>${ri.left} days</b>, with up to <b>${money(ri.uplift)}</b> more.` : '' })}
         ${leak({ n: 2, ic: 'coin', w: 'overcharge', r: 'inbox', desk: 'the Inbox', title: 'An invoice charges more than the agreed price',
           today: `Fleetline signed lower prices in September. The signed change sits in an email, so invoices are checked against the old prices.`,
-          cost: flFiled ? `<b>${money(flR.flagged)}</b> overcharged on one invoice.` : `Looks like <b>${money(flR.flagged)}</b> over. Really <b>$9,486.92</b> once the change is filed.`,
-          steps: [step('Legal team', 'ai', 'files the change; AI reads the new prices'), step('Finance team', 'code', 'gets every line checked against them'), step('Finance team', 'you', 'holds only the difference')] })}
+          cost: flFiled ? `<b>${money(flR.flagged)}</b> overcharged on one invoice.` : `Looks like <b>${money(flR.flagged)}</b> over. Really <b>$9,486.92</b> once the change is filed.` })}
         ${leak({ n: 3, ic: 'gift', w: 'credit', r: 'invoices', desk: 'Invoice check', title: 'A refund the supplier owes is never claimed',
           today: bc ? `BrightClean scored ${bcAct}% against a promised ${bc.slaCredit.target}%, so it owes a ${bc.slaCredit.creditPct}% credit. Finance has never seen that clause.` : '',
-          cost: bcR.credit ? `<b>${money(bcR.credit)}</b> owed for October alone.` : 'Claimed.',
-          steps: [step('Finance team', 'code', 'sees the missing credit on the invoice'), step('Finance team', 'you', 'claims it')] })}
+          cost: bcR.credit ? `<b>${money(bcR.credit)}</b> owed for October alone.` : 'Claimed.' })}
       </div>
 
       <h2>Who uses what</h2>
@@ -483,8 +477,6 @@
         <div>${tag('code')}<p><b>Dates, money and checks.</b> Exact rules, the same every time. No AI.</p></div>
         <div>${tag('you')}<p><b>Anything binding.</b> A named person decides. Nothing is sent automatically.</p></div>
       </div>
-
-      <div class="bar"><button class="btn pri" data-act="tour-start">${icon('play')}Take the two-minute guided tour</button><button class="btn" data-act="go" data-r="why">${icon('pen')}Why signed contracts</button></div>
 
       <h2>Right now in this workspace</h2>
       <div class="tiles">

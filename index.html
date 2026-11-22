@@ -9,7 +9,7 @@
 <body>
 <meta name="claude:viewport-fit-sides" content="cover">
 <title>Afterink Contract Repository</title>
-<script>(function(){var t="night";try{if(localStorage.getItem("afterink.theme")==="light")t="light";}catch(e){}var q=new URLSearchParams(location.search).get("theme");if(q==="light"||q==="night")t=q;document.documentElement.dataset.theme=t;})();</script>
+<script>(function(){var t="light";try{if(localStorage.getItem("afterink.theme")==="night")t="night";}catch(e){}var q=new URLSearchParams(location.search).get("theme");if(q==="light"||q==="night")t=q;document.documentElement.dataset.theme=t;})();</script>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&display=swap">
 <style>
 /* Layout: the workspace and the case for it run down a left rail; one working pane on the right.
@@ -572,6 +572,68 @@ h1,h2{color:var(--ink)}
 .nl .nlt{display:flex;flex-direction:column;line-height:1.25;min-width:0}
 .nl .nt{font-size:12px;color:var(--muted);font-weight:400}
 .side .nl.on .nt{color:rgba(255,255,255,.85)}
+
+/* ---------- Sirion light ----------
+   Light mode follows sirion.ai's own light pages: a lavender-white page (#F3F3FF), lavender panels
+   (#E1E3FE) with 16px corners and no borders, navy text, white 8px-radius buttons, one purple button for
+   the main action, and small indigo outlined pills as section labels. Headings are large and light. */
+:root[data-theme="light"]{--bg:#F3F3FF;--surface:#FFFFFF;--sunk:#E1E3FE;--line:#E1E3FE;--hover:#E9EAFE;
+  --ink:#0B1821;--soft:#2E3A44;--muted:#55595C;--label:#5C63B2;--teal:#5C63B2;--accent:#92429F;--accent-hover:#773A86;
+  --accent-soft:#F3E8F5;--accent-text:#7A3487;--code-text:#3F4699;--lav:#E1E3FE;--peri:#C9CDFD;--indigo:#6E76D5}
+[data-theme="light"] body{background:var(--bg);color:var(--ink)}
+/* Header: periwinkle into lavender, navy text, white pill buttons, purple main button. */
+[data-theme="light"] .band{background:linear-gradient(180deg,#C9CDFD 0%,#E1E3FE 100%)!important;color:var(--ink);border-bottom:0!important}
+[data-theme="light"] .band .brand b{color:var(--ink);font-weight:500}
+[data-theme="light"] .band .brand span,[data-theme="light"] .band .topr{color:#3A4148}
+[data-theme="light"] .band .btn.ghost,[data-theme="light"] .band .chip,[data-theme="light"] .band .chip.good,[data-theme="light"] .band .chip.mute{background:#FCFDFD!important;color:var(--ink)!important;border:0!important;border-radius:8px}
+[data-theme="light"] .band .chip.good::before{content:"";display:inline-block;width:7px;height:7px;border-radius:50%;background:#1F9D57;margin-right:6px;vertical-align:1px}
+[data-theme="light"] .band .btn.light{background:var(--accent)!important;color:#FFFFFF!important;border:0!important}
+[data-theme="light"] .band .btn.light:hover{background:var(--accent-hover)!important}
+/* Buttons: 8px corners, 14-15px, no heavy borders. */
+[data-theme="light"] .btn{border-radius:8px;border:1px solid #D9DCF7;background:#FFFFFF;color:var(--ink);font-weight:500;padding:9px 16px}
+[data-theme="light"] .btn.sm{padding:6px 12px}
+[data-theme="light"] .btn:hover{border-color:var(--indigo)}
+[data-theme="light"] .btn.pri{background:var(--accent);border-color:var(--accent);color:#FFFFFF}
+[data-theme="light"] .btn.pri:hover{background:var(--accent-hover);border-color:var(--accent-hover)}
+/* Menu: sits on the page, current item is a lavender pill, group names are indigo labels. */
+[data-theme="light"] .side{background:transparent!important;border:0!important}
+[data-theme="light"] .side .nl{color:var(--ink);border-left:0;border-radius:8px}
+[data-theme="light"] .side .nl:hover{background:var(--hover)}
+[data-theme="light"] .side .nl.on{background:var(--lav)!important;color:var(--ink)!important;font-weight:500}
+[data-theme="light"] .side .nl.on .ic{color:var(--accent)!important}
+[data-theme="light"] .side .nl.on .nt{color:var(--muted)}
+[data-theme="light"] .side .ct{background:#FFFFFF;color:var(--ink);border:0}
+[data-theme="light"] .side .nl.on .ct{background:#FFFFFF!important;color:var(--ink)!important}
+[data-theme="light"] .side .ng{color:var(--label);letter-spacing:.1em}
+@media (max-width:860px){[data-theme="light"] .side .nl{background:#FFFFFF;border:0}[data-theme="light"] .side .nl.on{background:var(--lav)!important}}
+/* Section labels: the outlined indigo pill. */
+[data-theme="light"] .glowpill{display:inline-flex;align-items:center;gap:6px;padding:3px 10px 3px 7px;border:1px solid var(--indigo);border-radius:30px;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--label);background:transparent}
+[data-theme="light"] .glowpill::before{content:"";position:static;inset:auto;width:6px;height:6px;border-radius:50%;background:var(--indigo);animation:none}
+[data-theme="light"] .glowpill::after{display:none}
+[data-theme="light"] .desk{color:var(--label)}
+[data-theme="light"] main h3{color:var(--label)}
+/* Headings: large and light, tight spacing. */
+[data-theme="light"] main h1{font-weight:400;font-size:clamp(32px,3.4vw,46px);letter-spacing:-.02em;line-height:1.1}
+[data-theme="light"] main h2{font-weight:400;font-size:28px;letter-spacing:-.01em}
+[data-theme="light"] .lede{color:var(--soft)}
+/* Panels: white on the lavender-white page, 16px corners, a hairline of lavender instead of grey borders. */
+[data-theme="light"] .card,[data-theme="light"] .tile,[data-theme="light"] .docrow,[data-theme="light"] .scroll,[data-theme="light"] .pos,[data-theme="light"] .teamcard{background:#FFFFFF;border:1px solid var(--lav);border-radius:16px}
+[data-theme="light"] .leak{background:var(--lav);border:0;border-radius:16px;padding:22px 22px 18px}
+[data-theme="light"] .leak h3{color:var(--ink);font-weight:500;font-size:19px}
+[data-theme="light"] .leak-ic{background:#FFFFFF;color:var(--accent)}
+[data-theme="light"] .leak-n{color:#454C98}
+[data-theme="light"] .hero{background:var(--lav);border:0;border-radius:16px;color:var(--ink)}
+[data-theme="light"] .team-ic{background:var(--lav);color:var(--accent)}
+[data-theme="light"] .tbl th{color:var(--muted);border-bottom-color:var(--lav)}
+[data-theme="light"] .tbl td{border-bottom-color:#ECEDFD}
+[data-theme="light"] .tbl tr.bad td{background:#FDF1F0}
+[data-theme="light"] details.more summary,[data-theme="light"] a{color:var(--accent-text)}
+[data-theme="light"] .foot{color:var(--muted)}
+/* Overview, trimmed: each leak is a title, one sentence, the money and one button. */
+.leak .leak-today{margin:10px 0 0;color:var(--soft)}
+.leak .leak-cost{margin:12px 0 14px!important;font-size:16px!important}
+.leak .bar{margin-top:auto}
+.facts-line{color:var(--muted);font-size:14px;margin:-4px 0 8px}
 </style>
 
 <header class="band">
