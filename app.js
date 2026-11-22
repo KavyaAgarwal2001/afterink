@@ -78,7 +78,7 @@
   /* The page sends data to a small server that holds the API key and the prompts (see proxy/).
      Below: the server's address, the health check, the streaming call, and a log of every call,
      so a viewer can see that the AI is live and what each call cost in time and tokens. */
-  const AI_URL_DEFAULT = 'https://afterink-proxy.REPLACE-ME.workers.dev';
+  const AI_URL_DEFAULT = 'https://afterink-proxy.afterink-proxy.workers.dev';
   /* ?ai=http://127.0.0.1:8787 points this one page load at a local server, for testing. Only local
      addresses are accepted and nothing is stored, so a shared link cannot send a viewer's text elsewhere. */
   const AI_URL_OVERRIDE = (() => {

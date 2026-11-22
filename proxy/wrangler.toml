@@ -13,9 +13,9 @@ simple = { limit = 20, period = 60 }
 # Optional: a daily cap on output tokens across all visitors (default 400,000, about USD 8 on
 # Claude Opus 5.5). Create the store once with `npx wrangler kv namespace create BUDGET`,
 # then paste the id it prints below and remove the leading `#` on these two lines.
-# [[kv_namespaces]]
-# binding = "BUDGET"
-# id = "paste-the-id-here"
+[[kv_namespaces]]
+binding = "BUDGET"
+id = "cb3cbcfbbbb8481fb710904e55997954"
 
 [vars]
 # Comma-separated origins allowed to call this server. Add your own if the page moves.
