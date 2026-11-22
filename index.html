@@ -284,6 +284,20 @@ mark.hl.on{outline:2px solid var(--accent);outline-offset:1px}
 .persona dd{margin:0}
 .foot{margin-top:48px;padding-top:14px;border-top:1px solid var(--line);font-size:12px;color:var(--muted)}
 @media (prefers-reduced-motion:reduce){*{scroll-behavior:auto!important}}
+/* Live AI: a slim strip under the band names the model and lists every call made this session. */
+.aistrip{background:var(--sunk);border:1px solid var(--line);border-radius:8px;padding:8px 14px;margin:0 0 20px;font-size:13px;color:var(--muted)}
+.aistrip b{color:var(--ink)}
+.aistrip-in{display:flex;gap:12px;align-items:baseline;flex-wrap:wrap}
+.aistrip-in span{flex:1 1 400px;min-width:0}
+.ailog{margin:8px 0 0}
+.hero{display:flex;gap:16px;align-items:center;justify-content:space-between;flex-wrap:wrap;background:var(--accent-soft);border:1px solid var(--accent);border-radius:10px;padding:16px 18px;margin:0 0 20px}
+.hero>div{flex:1 1 360px;min-width:0}
+.hero b{font:600 17px/1.3 var(--f-ui)}
+.hero p{margin:4px 0 0;color:var(--muted)}
+.findbox{background:var(--sunk);border-radius:8px;padding:12px 14px;margin:0 0 12px;max-width:90ch}
+.findbox p{margin:0 0 6px}
+.findbox .sugg{margin:0 0 8px}
+.fchip{display:inline-block;font:500 12px var(--f-mono);background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:3px 8px}
 </style>
 
 <header class="band">
@@ -295,6 +309,7 @@ mark.hl.on{outline:2px solid var(--accent);outline-offset:1px}
 </header>
 <div class="wrap">
   <p class="aibar" id="ai-bar" role="status" hidden></p>
+  <div class="aistrip" id="ai-strip" role="status" hidden></div>
   <div class="app">
     <nav class="side" id="nav" aria-label="Sections"></nav>
     <main id="main"></main>
@@ -307,9 +322,9 @@ mark.hl.on{outline:2px solid var(--accent);outline-offset:1px}
   <div class="intro" role="dialog" aria-modal="true" aria-labelledby="intro-h">
     <p class="desk">Working prototype</p>
     <h2 id="intro-h">Afterink in about two minutes</h2>
-    <p>A contract repository for the stage after signature, built for an invented company, Kestrel Mobility. Everything you click works, and nothing is sent to anyone.</p>
+    <p>A contract repository for the stage after signature, built for an invented company, Kestrel Mobility. Everything you click works, the AI steps run live, and nothing is sent to anyone.</p>
     <ol class="verbs">
-      <li><b>File</b>Legal Ops files a signed document. AI reads it and code checks it.</li>
+      <li><b>File</b>Legal Ops files a signed document. AI reads it live and code checks every quote.</li>
       <li><b>Check</b>Accounts Payable checks invoices against the agreed rates.</li>
       <li><b>Decide</b>Procurement decides each renewal before its notice date.</li>
       <li><b>Measure</b>Success is dates decided in time, not alerts sent.</li>
