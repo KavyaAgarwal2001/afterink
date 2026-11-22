@@ -26,7 +26,7 @@ The server works with a free Gemini key from Google AI Studio or a paid Claude k
 
 The model reads and drafts. It never does the arithmetic: dates, price comparisons and the check that every quoted sentence really is in the document are done by code in your browser.
 
-Nothing in the prototype sends an email, makes a payment or contacts a supplier. Use **Reset demo** to return to the starting state.
+Nothing in the prototype sends an email, makes a payment or contacts a supplier. Changes last only while the tab is open; every new visit starts from the same sample data.
 
 ## Files
 

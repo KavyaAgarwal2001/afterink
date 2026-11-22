@@ -67,8 +67,8 @@
   function fresh() {
     return { v: 3, route: 'start', contracts: SEED_CONTRACTS.map(buildContract), inbox: SEED_INBOX.map(buildDoc), invoices: SEED_INVOICES.map(i => Object.assign(clone(i), { status: 'unchecked' })), decisions: {}, log: [], asked: 0, sel: {} };
   }
-  function load() { try { const j = JSON.parse(localStorage.getItem(KEY)); if (j && j.v === 3 && Array.isArray(j.contracts)) return j; } catch (e) { /* storage unavailable */ } return fresh(); }
-  function save() { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) { /* storage unavailable */ } }
+  function load() { try { localStorage.removeItem(KEY); } catch (e) { /* storage unavailable; older builds kept state here */ } try { const j = JSON.parse(sessionStorage.getItem(KEY)); if (j && j.v === 3 && Array.isArray(j.contracts)) return j; } catch (e) { /* storage unavailable */ } return fresh(); }
+  function save() { try { sessionStorage.setItem(KEY, JSON.stringify(S)); } catch (e) { /* storage unavailable */ } }
   let S = load();
   const T = { hl: null, busy: null, review: null, ask: null, briefs: {}, choice: {}, letters: {}, disputes: {}, repoQ: '', repoF: 'all', pasteInv: '', pasteText: '', find: null, showLog: false, aiDraft: {} };
   const DESK = { legal: 'Legal Operations', proc: 'Procurement', fin: 'Accounts Payable', any: 'Anyone' };
@@ -912,7 +912,6 @@
   }
   const ACT = {
     go: d => go(d.r),
-    reset() { const rc = $('#reset-confirm'); if (rc) rc.hidden = true; S = fresh(); S.route = location.hash.slice(1) && VIEWS[location.hash.slice(1)] ? location.hash.slice(1) : 'start'; Object.assign(T, { hl: null, busy: null, review: null, ask: null, briefs: {}, choice: {}, letters: {}, disputes: {}, repoQ: '', repoF: 'all', pasteInv: '', pasteText: '', find: null, citeText: null, aiDraft: {} }); save(); render(); toast('Demo data restored.'); },
     'paste-sample'() { T.pasteText = SAMPLE_CONTRACT_TEXT; render(); const ta = $('#paste-contract'); if (ta) ta.scrollIntoView({ block: 'center' }); },
     explain: explainAmendment,
     find() { findInWords($('#find-q').value); },
@@ -1057,8 +1056,7 @@
     'tour-end'() { TOUR.on = false; tourPaint(); toast('Walkthrough closed. Start another from the Overview, or the guided tour from the top bar.'); },
     'intro-tour'() { introSeen(); startTour(TOUR_STEPS, 'Guided tour'); },
     'intro-skip'() { introSeen(); },
-    'reset-ask'() { const rc = $('#reset-confirm'); rc.hidden = !rc.hidden; if (!rc.hidden) $('#reset-yes').focus(); },
-    'reset-cancel'() { $('#reset-confirm').hidden = true; }
+
   });
   document.addEventListener('click', e => { if (e.target && e.target.id === 'intro') introSeen(); });
   document.addEventListener('click', e => { const el = e.target.closest('[data-act]'); if (!el || el.disabled) return; const fn = ACT[el.dataset.act]; if (fn) { e.preventDefault(); fn(el.dataset, el); } });
@@ -1072,7 +1070,7 @@
     if (el.dataset.inp === 'pastedoc') T.pasteText = el.value;
   });
   document.addEventListener('keydown', e => {
-    if (e.key === 'Escape') { if (!$('#intro').hidden) { introSeen(); return; } if (!$('#reset-confirm').hidden) { $('#reset-confirm').hidden = true; return; } if (TOUR.on) { ACT['tour-end'](); return; } }
+    if (e.key === 'Escape') { if (!$('#intro').hidden) { introSeen(); return; } if (TOUR.on) { ACT['tour-end'](); return; } }
     if (e.key !== 'Enter') return;
     if (e.target.id === 'ask-q') { e.preventDefault(); ask(e.target.value); }
     else if (e.target.id === 'find-q') { e.preventDefault(); findInWords(e.target.value); }
@@ -1179,9 +1177,8 @@
   /* Light and dark: Night is the default. The top-bar button switches, and this viewer's choice is
      remembered in their browser. The page sets the mode before it first paints (see index.html). */
   function headerIcons() {
-    const tb = $('#tour-btn'), rb = $('#reset-btn');
+    const tb = $('#tour-btn');
     if (tb && !tb.querySelector('svg')) tb.insertAdjacentHTML('afterbegin', icon('play'));
-    if (rb && !rb.querySelector('svg')) rb.insertAdjacentHTML('afterbegin', icon('reset'));
   }
   headerIcons();
   render();
