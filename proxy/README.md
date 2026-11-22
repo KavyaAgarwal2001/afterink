@@ -46,7 +46,7 @@ Check it is up: open `<address>/v1/health` in a browser. It should say `"ok": tr
 |---|---|---|
 | `ALLOWED_ORIGINS` | Which page addresses may call the server | the two GitHub Pages copies and localhost |
 | `PROVIDER` | `gemini` or `anthropic` when both keys are set | whichever key exists |
-| `GEMINI_MODELS` | Gemini models tried in order; the next one is tried when a model is over quota, overloaded, not available to the key, or sends nothing for 20 seconds | `gemini-3.5-flash-lite,gemini-3.6-flash,gemini-3.8-flash` |
+| `GEMINI_MODELS` | Gemini models tried in order; the next one is tried when a model is over quota, overloaded, not available to the key, or sends nothing for 20 seconds; if every model is busy, the list is tried once more after a 3-second pause | `gemini-3.5-flash-lite,gemini-3.1-flash-lite,gemini-3.6-flash,gemini-3.8-flash` |
 | `GEMINI_THINKING` | How hard Gemini thinks before answering: `MINIMAL`, `LOW`, `MEDIUM` or `HIGH`. Higher is slower; `LOW` read the sample contract perfectly in about five seconds | `LOW` |
 | `ANTHROPIC_MODEL` | The Claude model | `claude-opus-5-5` |
 | `DAILY_OUTPUT_TOKENS` | Daily cap across all visitors, only enforced when the `BUDGET` store exists | 400,000 |

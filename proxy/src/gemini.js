@@ -13,7 +13,7 @@
 import { GoogleGenAI, ApiError } from '@google/genai';
 import { Reject } from './common.js';
 
-export const DEFAULT_MODELS = 'gemini-3.5-flash-lite,gemini-3.6-flash,gemini-3.8-flash';
+export const DEFAULT_MODELS = 'gemini-3.5-flash-lite,gemini-3.1-flash-lite,gemini-3.6-flash,gemini-3.8-flash';
 const FIRST_TEXT_MS = 20000;   // give up on a model that has sent nothing after this long
 const TOTAL_MS = 110000;       // hard cap on one model's whole reply
 
@@ -22,10 +22,10 @@ class Slow extends Error { constructor(model, ms) { super(`${model} sent no text
 function mapError(e) {
   const status = e && e.status, msg = String((e && e.message) || e).slice(0, 300);
   console.error('gemini error', status || '', msg);
-  if (e && e.slow) return new Reject('upstream_error', 'Gemini is slow to answer right now. Try again in a minute.', 504);
+  if (e && e.slow) return new Reject('overloaded', 'Gemini is slow to answer right now. Try again in a minute.', 504);
   if (e instanceof ApiError || (e && typeof e.status === 'number')) {
     if (e.status === 429) return new Reject('rate_limited', "Gemini's free quota is used up for now. Try again in a minute, or later today.", 429);
-    if (e.status === 503) return new Reject('upstream_error', 'Gemini is overloaded right now. Try again in a minute.', 503);
+    if (e.status === 503) return new Reject('overloaded', 'Gemini is overloaded right now. Try again in a minute.', 503);
     /* Google answers a bad key with 400 INVALID_ARGUMENT, so look at the reason as well as the status. */
     if (e.status === 401 || e.status === 403 || /API_KEY_INVALID|API key not valid/i.test(msg)) return new Reject('auth', 'The AI server is not configured with a valid key.', 502);
     if (e.status === 400) return new Reject('bad_request', 'The AI server rejected the request.', 502);
@@ -76,20 +76,30 @@ export async function* run(spec, env) {
   /* One HTTP attempt per model: the fallback list does the retrying, so a busy model costs seconds,
      not the SDK's half-minute of backoff. */
   const ai = new GoogleGenAI({ apiKey: env.GEMINI_API_KEY, httpOptions: { timeout: TOTAL_MS + 5000, retryOptions: { attempts: 1 } } });
+  /* Two passes over the list. Free-tier demand spikes are usually short, so when every model is busy,
+     a pause of a few seconds and a second pass gets most calls through. A model missing for this key
+     (404) is skipped on the second pass. */
+  const PAUSE_MS = Number(env.GEMINI_RETRY_PAUSE_MS) || 3000;
+  const missing = new Set();
   let lastErr = null;
-  for (let i = 0; i < models.length; i++) {
-    let started = false;
-    try {
-      const gen = once(ai, models[i], spec, env);
-      let r;
-      while (!(r = await gen.next()).done) { started = true; yield r.value; }
-      return r.value;
-    } catch (e) {
-      lastErr = e;
-      /* Move on only when nothing has been streamed yet, so the viewer never sees two answers spliced. */
-      const st = e && e.status, next = e.slow || st === 429 || st === 503 || st === 404 || st === 500;
-      if (!next || started || i === models.length - 1) throw mapError(e);
-      console.error('gemini', models[i], 'unavailable (' + (e.slow ? 'slow to start' : st) + '), trying', models[i + 1]);
+  for (let pass = 0; pass < 2; pass++) {
+    if (pass) { console.error('gemini: every model busy, trying again in', PAUSE_MS, 'ms'); await new Promise(r => setTimeout(r, PAUSE_MS)); }
+    for (let i = 0; i < models.length; i++) {
+      if (missing.has(models[i])) continue;
+      let started = false;
+      try {
+        const gen = once(ai, models[i], spec, env);
+        let r;
+        while (!(r = await gen.next()).done) { started = true; yield r.value; }
+        return r.value;
+      } catch (e) {
+        lastErr = e;
+        /* Move on only when nothing has been streamed yet, so the viewer never sees two answers spliced. */
+        const st = e && e.status, next = e.slow || st === 429 || st === 503 || st === 404 || st === 500;
+        if (!next || started) throw mapError(e);
+        if (st === 404) missing.add(models[i]);
+        console.error('gemini', models[i], 'unavailable (' + (e.slow ? 'slow to start' : st) + ')');
+      }
     }
   }
   throw mapError(lastErr);
