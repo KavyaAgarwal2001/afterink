@@ -122,7 +122,7 @@ Legal Operations and Accounts Payable get the Inbox and Invoice check. The renew
 
 A fourth document, a two-page catering letter, was written to be vague on purpose. It shows the AI saying "not stated" instead of guessing.
 
-**The five-step path** on the Start page orders these so one desk's work visibly changes the next desk's screen.
+**The five-step path** on the Overview orders these so one desk's work visibly changes the next desk's screen.
 
 **Two places where the model is used beyond the four desks' main steps.** Both follow the same rule: the model reads or translates, code does the exact work.
 

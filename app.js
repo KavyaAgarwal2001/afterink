@@ -1007,7 +1007,7 @@
       why: "The north star counts silence as a miss. Corvid's notice date passed before the product existed, so the score can never reach 100% on old misses, and unfiled documents count as undecided.",
       tryIt: () => 'Check how the tiles moved with what you did, then scroll to the table of what would make us rethink the approach.' }
   ];
-  /* One walkthrough per money leak, started from the cards on the Start page. */
+  /* One walkthrough per money leak, started from the cards on the Overview. */
   const fl = () => checkInvoice(S.invoices.find(i => i.id === 'FL-20931')).flagged;
   const WALKS = {
     renewal: { label: 'Missed renewal, step by step', steps: [
@@ -1062,7 +1062,7 @@
     'tour-next'() { tourGo(TOUR.i + 1); },
     'tour-prev'() { tourGo(TOUR.i - 1); },
     'tour-here'() { tourGo(TOUR.i); },
-    'tour-end'() { TOUR.on = false; tourPaint(); toast('Walkthrough closed. Start another from the Start page, or the guided tour from the top bar.'); },
+    'tour-end'() { TOUR.on = false; tourPaint(); toast('Walkthrough closed. Start another from the Overview, or the guided tour from the top bar.'); },
     'intro-tour'() { introSeen(); startTour(TOUR_STEPS, 'Guided tour'); },
     'intro-skip'() { introSeen(); },
     'reset-ask'() { const rc = $('#reset-confirm'); rc.hidden = !rc.hidden; if (!rc.hidden) $('#reset-yes').focus(); },
@@ -1116,13 +1116,14 @@
   };
   const icon = name => ICON[name] ? `<svg class="ic" viewBox="0 0 24 24" aria-hidden="true" focusable="false">${ICON[name]}</svg>` : '';
   const NAV = [
-    { r: 'start', t: 'Start here', ic: 'home' },
-    { g: 'Legal team' }, { r: 'inbox', t: 'Inbox', ic: 'inbox', alias: ['review'], ct: () => S.inbox.filter(d => d.status === 'new').length },
-    { g: 'Buying team' }, { r: 'renewals', t: 'Renewal desk', ic: 'calendar', alias: ['renewal'], ct: () => renewalItems(90).filter(it => !S.decisions[it.c.id]).length },
-    { g: 'Finance team' }, { r: 'invoices', t: 'Invoice check', ic: 'receipt', alias: ['invoice'], ct: () => S.invoices.filter(i => !['disputed', 'approved', 'blind'].includes(i.status)).length },
-    { g: 'Everyone' }, { r: 'repository', t: 'Repository', ic: 'archive', alias: ['contract'] }, { r: 'ask', t: 'Ask', ic: 'chat' },
-    { g: 'Why Afterink' }, { r: 'why', t: 'Why after signature', ic: 'pen' }, { r: 'stakeholders', t: 'Who it serves', ic: 'users' }, { r: 'problem', t: 'The problem', ic: 'alert' },
-    { r: 'metrics', t: 'Measuring success', ic: 'target' }
+    { r: 'start', t: 'Overview', ic: 'home' },
+    { g: 'Why Afterink' }, { r: 'problem', t: 'The problem', ic: 'alert' }, { r: 'why', t: 'Why after signature', ic: 'pen' }, { r: 'stakeholders', t: 'Who it serves', ic: 'users' },
+    { r: 'metrics', t: 'Measuring success', ic: 'target' },
+    { g: 'The product' },
+    { r: 'inbox', t: 'Inbox', team: 'Legal team', ic: 'inbox', alias: ['review'], ct: () => S.inbox.filter(d => d.status === 'new').length },
+    { r: 'renewals', t: 'Renewal desk', team: 'Buying team', ic: 'calendar', alias: ['renewal'], ct: () => renewalItems(90).filter(it => !S.decisions[it.c.id]).length },
+    { r: 'invoices', t: 'Invoice check', team: 'Finance team', ic: 'receipt', alias: ['invoice'], ct: () => S.invoices.filter(i => !['disputed', 'approved', 'blind'].includes(i.status)).length },
+    { r: 'repository', t: 'Repository', team: 'Everyone', ic: 'archive', alias: ['contract'] }, { r: 'ask', t: 'Ask', team: 'Everyone', ic: 'chat' }
   ];
   /* The strip under the top band: which model is live, and every call made in this session. */
   function strip() {
@@ -1148,7 +1149,7 @@
     }
     const chipEl = $('#ai-chip');
     if (chipEl) { chipEl.className = 'chip aichip ' + (AI.state === 'live' ? 'good' : 'mute'); chipEl.textContent = AI.state === 'live' ? `AI: live, ${AI.modelName || AI.model}` : AI.state === 'off' ? 'AI: saved results' : 'AI: checking'; }
-    $('#nav').innerHTML = NAV.map(n => n.g ? `<p class="ng">${n.n ? `<span class="nn">${n.n}</span>` : ''}${n.g}</p>` : `<a class="nl${S.route === n.r || (n.alias || []).includes(S.route) ? ' on' : ''}" href="#${n.r}">${n.n ? `<span class="nn">${n.n}</span>` : ''}${icon(n.ic)}<span>${n.t}</span>${n.ct && n.ct() ? `<span class="ct">${n.ct()}</span>` : ''}</a>`).join('');
+    $('#nav').innerHTML = NAV.map(n => n.g ? `<p class="ng">${n.n ? `<span class="nn">${n.n}</span>` : ''}${n.g}</p>` : `<a class="nl${S.route === n.r || (n.alias || []).includes(S.route) ? ' on' : ''}" href="#${n.r}">${n.n ? `<span class="nn">${n.n}</span>` : ''}${icon(n.ic)}${n.team ? `<span class="nlt"><span>${n.t}</span><span class="nt">${n.team}</span></span>` : `<span>${n.t}</span>`}${n.ct && n.ct() ? `<span class="ct">${n.ct()}</span>` : ''}</a>`).join('');
   }
   let lastRoute = null;
   function render() {
