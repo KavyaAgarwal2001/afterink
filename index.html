@@ -9,6 +9,7 @@
 <body>
 <meta name="claude:viewport-fit-sides" content="cover">
 <title>Afterink Contract Repository</title>
+<script>(function(){var t="night";try{if(localStorage.getItem("afterink.theme")==="light")t="light";}catch(e){}var q=new URLSearchParams(location.search).get("theme");if(q==="light"||q==="night")t=q;document.documentElement.dataset.theme=t;})();</script>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&display=swap">
 <style>
 /* Layout: the workspace and the case for it run down a left rail; one working pane on the right.
@@ -350,12 +351,64 @@ h3{font-weight:700;font-size:11px;letter-spacing:.14em;color:var(--teal)}
 .hero p{color:var(--on-band-muted)}
 .intro{border-top-color:var(--accent);border-radius:16px}
 .toast{background:var(--band);color:var(--on-band)}
+
+/* ---------- Two modes: Sirion Night (the default) and Sirion Light (the toggle in the top bar) ----------
+   Each mode only changes tokens and a few shared pieces, so every screen, diagram and state follows it. */
+
+/* Sirion Light: the same brand colours on an all-light, airy layout. */
+:root[data-theme="light"]{--bg:#F7F8FA;--sunk:#F1F4F6;--line:#E3E8EA;--band:#FFFFFF;--on-band:#0B1821;--on-band-muted:#55595C;--band-chip:#F1F4F6;--glow:none}
+[data-theme="light"] .band{border-bottom:1px solid var(--line)}
+[data-theme="light"] .band .chip.mute,[data-theme="light"] .band .chip.good{background:var(--teal-soft);color:var(--teal);border-color:#CFDFE1}
+[data-theme="light"] .btn.ghost{color:var(--ink);border-color:var(--line)}
+[data-theme="light"] .side{background:var(--surface);border:1px solid var(--line)}
+[data-theme="light"] .side .nl{color:var(--ink)}
+[data-theme="light"] .side .nl:hover{background:var(--sunk)}
+[data-theme="light"] .side .nl.on{background:var(--accent-soft);color:var(--accent);font-weight:600}
+[data-theme="light"] .side .ct{background:var(--ink);color:#fff}
+[data-theme="light"] .side .nl.on .ct{background:var(--accent);color:#fff}
+[data-theme="light"] .hero{background:linear-gradient(120deg,#F4EAF6,#E7EFF0);border:1px solid #E5D3EA;color:var(--ink)}
+[data-theme="light"] .hero p{color:var(--muted)}
+[data-theme="light"] .tile.star{background:var(--accent-soft);color:var(--ink);border-color:#E5D3EA}
+[data-theme="light"] .tile.star .tl,[data-theme="light"] .tile.star .ts{color:var(--muted)}
+[data-theme="light"] .side .ng{color:var(--teal)}
+@media (max-width:860px){[data-theme="light"] .side .nl{background:var(--sunk)}[data-theme="light"] .side .nl.on{background:var(--accent);color:#fff}}
+
+/* Sirion Night: fully dark, like sirion.ai itself. Contracts stay on paper so they read like documents. */
+:root[data-theme="night"]{color-scheme:dark;--bg:#0B1821;--surface:#102430;--sunk:#0E1F29;--ink:#EEF2F3;--muted:#A3B2B8;--line:#20394A;
+  --accent:#B565C4;--accent-hover:#C77BD6;--accent-ink:#FFFFFF;--accent-soft:#2B1F36;--teal:#7FB9C1;--teal-soft:#0F2E33;--teal-mid:#5D939A;
+  --band:#07121A;--band-chip:#0F2E33;--mark:#4D2E59;--mark-ink:#FFFFFF;--shadow:rgba(0,0,0,.5);--scrim:rgba(0,0,0,.6);
+  --good:#86DDAE;--good-soft:#12352A;--warn:#F0C674;--warn-soft:#3A2E14;--crit:#FF948A;--crit-soft:#3E1C1C}
+[data-theme="night"] body{background:radial-gradient(90% 60% at 50% -10%,rgba(13,94,104,.35),transparent 70%),var(--bg)}
+[data-theme="night"] .doc{background:#F7F5EF;color:#1C1A17}
+[data-theme="night"] .doc mark.hl{background:#E9D2EE;color:#1C1A17}
+[data-theme="night"] .side{border:1px solid var(--line)}
+[data-theme="night"] .tbl tr.bad td{background:var(--crit-soft)}
+[data-theme="night"] .toast{background:var(--surface);color:var(--ink);border:1px solid var(--line)}
+
+
+/* Sirion's own gradients, taken from sirion.ai: the blue-to-purple announcement bar, and the rotating
+   periwinkle-and-white border it puts on outlined pills. */
+.announce{background:linear-gradient(90deg,#0F3FBB -97%,#7F208F 102%);color:#fff;font-size:14px}
+.announce-in{max-width:1280px;margin:0 auto;display:flex;gap:10px 18px;align-items:center;flex-wrap:wrap;padding-block:9px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.announce p{margin:0;flex:1 1 320px}
+.announce .lnk{color:#fff;font-weight:600;text-decoration:none;white-space:nowrap}
+.announce .lnk:hover{text-decoration:underline}
+.announce-x{background:none;border:0;color:#fff;font-size:20px;line-height:1;cursor:pointer;padding:0 2px;opacity:.85}
+.announce-x:hover{opacity:1}
+.glowpill{position:relative;display:table;padding:4px 14px;border-radius:50px;font-size:12.5px;line-height:1.4;isolation:isolate;overflow:hidden;margin:0 0 10px;color:var(--on-band)}
+.glowpill::before{content:"";position:absolute;inset:-160% -40%;background:conic-gradient(from 25deg,#818BFB 0deg,#FFFFFF 90deg,#818BFB 180deg,#FFFFFF 270deg,#818BFB 360deg);animation:rotateBorder 3s linear infinite;z-index:-2}
+.glowpill::after{content:"";position:absolute;inset:1.5px;border-radius:50px;background:#0C1C26;z-index:-1}
+[data-theme="light"] .glowpill{color:var(--ink)}
+[data-theme="light"] .glowpill::after{background:#FBF7FC}
+@keyframes rotateBorder{to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion:reduce){.glowpill::before{animation:none}}
 </style>
 
+<div class="announce" id="announce"><div class="announce-in"><p><b>Live AI prototype.</b> Every term the AI reads is checked by code before anyone relies on it.</p><button class="lnk" data-act="tour-start">Take the two-minute tour &#8594;</button><button class="announce-x" data-act="announce-x" aria-label="Hide this message">&#215;</button></div></div>
 <header class="band">
   <div class="band-in">
     <div class="brand"><b>Afterink</b><span>Signed contracts, turned into dates and prices people act on</span></div>
-    <div class="topr"><span>Demo date <span class="mono" id="demo-date"></span></span><span class="chip mute" id="ai-chip">Claude: checking</span><button class="btn sm light" data-act="tour-start" id="tour-btn">Guided tour</button><button class="btn sm ghost" data-act="reset-ask" id="reset-btn">Reset demo</button></div>
+    <div class="topr"><span>Demo date <span class="mono" id="demo-date"></span></span><span class="chip mute" id="ai-chip">Claude: checking</span><button class="btn sm ghost" data-act="theme-toggle" id="theme-btn" aria-pressed="false">Light mode</button><button class="btn sm light" data-act="tour-start" id="tour-btn">Guided tour</button><button class="btn sm ghost" data-act="reset-ask" id="reset-btn">Reset demo</button></div>
     <div class="confirm" id="reset-confirm" role="dialog" aria-label="Reset demo" hidden><p>Restore the demo to its starting state? Anything you filed, decided or disputed is cleared.</p><div class="bar"><button class="btn sm pri" data-act="reset" id="reset-yes">Reset</button><button class="btn sm" data-act="reset-cancel">Cancel</button></div></div>
   </div>
 </header>

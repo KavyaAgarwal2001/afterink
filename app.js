@@ -387,8 +387,8 @@
     if (!live()) return '';
     const next = S.inbox.find(d => d.status === 'new');
     return next
-      ? `<div class="hero"><div><b>Watch the AI read a signed document</b><p>${esc(next.filename)} is signed but not filed. Each term appears with the sentence it came from, and code checks every quote before a person decides anything.</p></div><button class="btn pri" data-act="read-doc" data-id="${next.id}" ${readingNow() ? 'disabled' : ''}>Read it with AI now</button></div>`
-      : `<div class="hero"><div><b>Every inbox document is filed</b><p>Paste a contract of your own and watch the AI read it, or ask the repository a question in plain words.</p></div><button class="btn pri" data-act="go" data-r="inbox">Read a contract of your own</button></div>`;
+      ? `<div class="hero"><div><span class="glowpill">Afterink &#183; AI contract repository</span><b>Watch the AI read a signed document</b><p>${esc(next.filename)} is signed but not filed. Each term appears with the sentence it came from, and code checks every quote before a person decides anything.</p></div><button class="btn pri" data-act="read-doc" data-id="${next.id}" ${readingNow() ? 'disabled' : ''}>Read it with AI now</button></div>`
+      : `<div class="hero"><div><span class="glowpill">Afterink &#183; AI contract repository</span><b>Every inbox document is filed</b><p>Paste a contract of your own and watch the AI read it, or ask the repository a question in plain words.</p></div><button class="btn pri" data-act="go" data-r="inbox">Read a contract of your own</button></div>`;
   }
   function fmtVal(fd, v) { if (v == null) return '<span class="muted">Not stated</span>'; if (fd.type === 'date') return fmtDate(v); if (fd.type === 'bool') return v ? 'Yes' : 'No'; if (fd.type === 'money') return money(v); return esc(v); }
   function fmtAnswer(t) {
@@ -505,7 +505,7 @@
       }
       return `${deskTag('legal')}<p><button class="lnk" data-act="go" data-r="inbox">← Back to inbox</button></p>
       <h1>${ex.supplier ? esc(ex.supplier) : '<span class="thinking">Reading the document…</span>'}</h1>
-      <p class="sub">${esc(ex.title)} · ${esc(ex.type)} · ${esc(ex.category)} · <span class="mono">${esc(R.filename)}</span> · ${R.streaming ? chip('info', 'Reading live…') : ex.source === 'live' ? chip('info', 'Read live by ' + (R.read && R.read.model ? R.read.model : (AI.modelName || 'the AI')) + (R.read && R.read.ms ? ' in ' + fmtMs(R.read.ms) : '')) : chip('mute', 'Saved AI reading')}</p>
+      <p class="sub">${(ex.meta || ex.source !== 'live' ? [ex.title, ex.type, ex.category] : []).filter(Boolean).map(x => esc(x) + ' · ').join('')}<span class="mono">${esc(R.filename)}</span> · ${R.streaming ? chip('info', 'Reading live…') : ex.source === 'live' ? chip('info', 'Read live by ' + (R.read && R.read.model ? R.read.model : (AI.modelName || 'the AI')) + (R.read && R.read.ms ? ' in ' + fmtMs(R.read.ms) : '')) : chip('mute', 'Saved AI reading')}</p>
       ${R.note ? `<p class="note">${esc(R.note)}</p>` : ''}
       ${ex.summary ? `<p class="lede">${esc(ex.summary)}</p>` : ''}
       ${ex.risks.length ? `<div class="callout"><b>Worth knowing before you file</b><ul>${ex.risks.map(r => `<li>${esc(r)}</li>`).join('')}</ul></div>` : ''}
@@ -1094,6 +1094,23 @@
     strip();
     render();   /* render keeps the focused input and its caret, so this is safe while someone types */
   }
+  /* Light and dark: Night is the default. The top-bar button switches, and this viewer's choice is
+     remembered in their browser. The page sets the mode before it first paints (see index.html). */
+  function themeButton() {
+    const light = document.documentElement.dataset.theme === 'light', b = $('#theme-btn');
+    if (b) { b.textContent = light ? 'Dark mode' : 'Light mode'; b.setAttribute('aria-pressed', String(light)); }
+  }
+  Object.assign(ACT, {
+    'theme-toggle'() {
+      const next = document.documentElement.dataset.theme === 'light' ? 'night' : 'light';
+      document.documentElement.dataset.theme = next;
+      try { localStorage.setItem('afterink.theme', next); } catch (e) { /* storage unavailable: the choice lasts this page load */ }
+      themeButton();
+    },
+    'announce-x'() { $('#announce').hidden = true; try { sessionStorage.setItem('afterink.announce', 'hidden'); } catch (e) { /* storage unavailable */ } }
+  });
+  themeButton();
+  try { if (sessionStorage.getItem('afterink.announce') === 'hidden') $('#announce').hidden = true; } catch (e) { /* storage unavailable */ }
   $('#demo-date').textContent = fmtDate(DEMO_TODAY);
   render();
   introInit();
