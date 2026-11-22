@@ -70,7 +70,7 @@
   function load() { try { const j = JSON.parse(localStorage.getItem(KEY)); if (j && j.v === 3 && Array.isArray(j.contracts)) return j; } catch (e) { /* storage unavailable */ } return fresh(); }
   function save() { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) { /* storage unavailable */ } }
   let S = load();
-  const T = { hl: null, busy: null, review: null, ask: null, briefs: {}, choice: {}, letters: {}, disputes: {}, repoQ: '', repoF: 'all', pasteInv: '', pasteText: '', find: null, showLog: false };
+  const T = { hl: null, busy: null, review: null, ask: null, briefs: {}, choice: {}, letters: {}, disputes: {}, repoQ: '', repoF: 'all', pasteInv: '', pasteText: '', find: null, showLog: false, aiDraft: {} };
   const DESK = { legal: 'Legal Operations', proc: 'Procurement', fin: 'Accounts Payable', any: 'Anyone' };
   function log(desk, text, ref) { S.log.unshift({ desk, text, ref: ref || null, n: S.log.length + 1 }); save(); }
 
@@ -379,7 +379,21 @@
 
   /* ---------- small view parts ---------- */
   const chip = (tone, text) => `<span class="chip ${tone}">${esc(text)}</span>`;
-  const deskTag = d => `<p class="desk">${esc(DESK[d])} desk</p>`;
+  /* Which team each screen is for. Shown as a badge at the top of every desk. */
+  const TEAM = {
+    legal: { ic: 'scale', name: 'the legal team', who: 'Legal Operations', job: 'Files every signed contract and makes sure it was read correctly.' },
+    proc: { ic: 'cart', name: 'the buying team', who: 'Procurement', job: 'Decides every renewal before the last day to say no.' },
+    fin: { ic: 'wallet', name: 'the finance team', who: 'Accounts Payable', job: 'Pays suppliers only what their contracts allow.' },
+    any: { ic: 'users', name: 'everyone', who: 'any employee', job: 'Finds what a contract says, with the clause that proves it.' }
+  };
+  const deskTag = d => `<div class="team"><span class="team-ic">${icon(TEAM[d].ic)}</span><div><b>For ${TEAM[d].name}</b> <span class="team-who">${esc(TEAM[d].who)}</span><p>${TEAM[d].job}</p></div></div>`;
+  /* Who produced each piece of output: the AI, ordinary code, or a person. The hover text says why. */
+  const TAG = {
+    ai: ['sparkle', 'Read by AI', 'AI is used here because contracts and invoices word the same thing in many different ways, so fixed rules would miss it.'],
+    code: ['calc', 'Calculated by code', 'Dates, money and checks follow exact rules, so ordinary code does them the same way every time. No AI is involved.'],
+    you: ['usercheck', 'Your decision', 'This commits the company or affects a supplier, so a named person decides. Nothing is sent automatically.']
+  };
+  const tag = (k, label) => `<span class="tag tag-${k}" title="${esc(TAG[k][2])}">${icon(TAG[k][0])}${esc(label || TAG[k][1])}</span>`;
   const aiNote = () => live() ? '' : `<p class="note">${AI.state === 'checking' ? 'Checking whether the AI server is reachable.' : `The live AI is off because ${WHY_OFF[AI.why] || WHY_OFF.offline}, so this page replays saved AI results. The checks, dates and sums still run live in your browser.`}</p>`;
   const PASTE_NOTE = 'Text you paste here is sent to the AI model through this demo\'s server, which runs on a free key whose provider may keep what it receives. Paste only public or sample documents.';
   const readingNow = () => !!(T.review && T.review.streaming);
@@ -424,35 +438,60 @@
     metrics: () => tpl('metrics'),
 
     start() {
-      const done = [S.inbox.find(d => d.id === 'D-1').status === 'filed', ['disputed', 'approved'].includes((S.invoices.find(i => i.id === 'FL-20931') || {}).status), S.inbox.find(d => d.id === 'D-2').status === 'filed', !!S.decisions['C-1001'], S.asked > 0];
-      const steps = [
-        ['inbox', 'File the Fleetline amendment', 'Legal Operations. A signed amendment has sat in a mailbox since September. Read it with AI, check the two changed terms against the source, and file it.'],
-        ['invoices', 'Check the Fleetline invoice', 'Accounts Payable. Open invoice FL-20931. With the amendment filed, the October invoice is over the agreed rate and over the new surcharge cap.'],
-        ['inbox', 'File the Talentbridge staffing agreement', 'Legal Operations. Until this is filed, Accounts Payable has nothing to check a USD 168,128 invoice against.'],
-        ['renewals', 'Decide the Cloudmetric renewal', 'Procurement. 15 days are left to give notice. Read the renewal brief, choose, edit the draft notice and record the decision.'],
-        ['ask', 'Ask the repository a question', 'Anyone. Every answer cites the contract and clause it came from.']
-      ];
-      const ns = northStar(), it = invoiceTotals();
-      return `<p class="desk">Working prototype</p><h1>Start here</h1>
-      <p class="lede">You are in the Kestrel Mobility demo workspace: a sample company with 3,000 employees and about 2,500 suppliers, and a slice of its contracts on file. Today in the demo is ${fmtDate(DEMO_TODAY)}.</p>
-      ${hero()}
-      <div class="flow" aria-label="How the desks connect">
-        <button class="fnode" data-act="go" data-r="inbox"><b>Inbox</b><span>Legal Operations files signed documents. AI reads, a person checks the terms that move money.</span></button>
-        <span class="farrow" aria-hidden="true">→</span>
-        <button class="fnode core" data-act="go" data-r="repository"><b>Repository</b><span>${S.contracts.length} verified contracts. Every term links to the sentence it came from.</span></button>
-        <span class="farrow" aria-hidden="true">→</span>
-        <div class="fstack">
-          <button class="fnode" data-act="go" data-r="renewals"><b>Renewal desk</b><span>Procurement decides before the notice date.</span></button>
-          <button class="fnode" data-act="go" data-r="invoices"><b>Invoice check</b><span>Accounts Payable pays what was agreed.</span></button>
-          <button class="fnode" data-act="go" data-r="ask"><b>Ask</b><span>Anyone gets a cited answer.</span></button>
-        </div>
+      /* The three money leaks, each computed from the demo's own data. */
+      const cm = getC('C-1001'), ri = cm && renewalItem(cm), dec = cm && S.decisions[cm.id];
+      const flInv = S.invoices.find(i => i.id === 'FL-20931'), flR = checkInvoice(flInv), flFiled = filed('D-1');
+      const bcInv = S.invoices.find(i => i.id === 'BC-1187'), bcR = checkInvoice(bcInv), bc = getC('C-1003');
+      const bcAct = bc && bc.perf ? bc.perf[bcInv.period] : null;
+      const step = (team, k, text) => `<li><span class="lk-team">${esc(team)}</span>${tag(k)}<span>${text}</span></li>`;
+      const leak = (o) => `<article class="leak"><div class="leak-h"><span class="leak-ic">${icon(o.ic)}</span><div><span class="leak-n">Leak ${o.n}</span><h3>${o.title}</h3></div></div>
+        <p class="leak-k">Where it happens today</p><p>${o.today}</p>
+        <p class="leak-k">What it costs</p><p class="leak-cost">${o.cost}</p>
+        <p class="leak-k">How Afterink stops it</p><ol class="leak-steps">${o.steps.join('')}</ol>
+        <div class="bar"><button class="btn pri" data-act="walk" data-w="${o.w}">${icon('play')}Show me, step by step</button><button class="btn" data-act="go" data-r="${o.r}">Open ${o.desk}</button></div></article>`;
+      const ns = northStar(), t = invoiceTotals();
+      return `<span class="glowpill">Afterink &#183; AI contract repository</span>
+      <h1>Afterink catches the deadlines and overcharges hidden in signed contracts.</h1>
+      <p class="lede">Companies sign thousands of supplier contracts, then file them away. Notice dates pass, invoices charge more than agreed, refunds go unclaimed. Afterink reads every signed contract with AI, turns its terms into dates and prices, and puts each one in front of the team that has to act.</p>
+      <p class="sub">This is a working demo on a sample company, Kestrel Mobility: 3,000 staff and about 2,500 suppliers. Everything works, the AI runs live, and nothing is ever sent outside the company. Today in the demo is ${fmtDate(DEMO_TODAY)}.</p>
+
+      <h2>Three ways money leaks out of signed contracts</h2>
+      <p class="sub">All three are happening in this demo right now. Each card shows where it happens today, what it costs, and how Afterink stops it.</p>
+      <div class="leaks">
+        ${leak({ n: 1, ic: 'clock', w: 'renewal', r: 'renewals', desk: 'the Renewal desk', title: 'A contract renews because nobody said no in time',
+          today: cm ? `Cloudmetric's software contract renews for another year unless someone gives notice ${cm.f.noticeDays} days before it ends. That last day, ${fmtDate(noticeBy(cm))}, is written in clause 3 of a PDF. Nobody has it in a calendar.` : '',
+          cost: dec ? `Decided in this session: ${esc((choicesFor(ri).find(x => x[0] === dec.choice) || ['', dec.choice])[1].toLowerCase())}.` : ri ? `<b>${money(ri.commit)}</b> commits automatically, with up to <b>${money(ri.uplift)}</b> of price rise. <b>${ri.left} days</b> left to say no.` : '',
+          steps: [step('Buying team', 'code', 'works out the last day to say no from the signed terms, for every contract'), step('Buying team', 'ai', 'writes a short brief and a draft notice letter'), step('Buying team', 'you', 'decides to renew, renegotiate or leave. Nothing is sent automatically.')] })}
+        ${leak({ n: 2, ic: 'coin', w: 'overcharge', r: 'inbox', desk: 'the Inbox', title: 'An invoice charges more than the agreed price',
+          today: `Fleetline signed a lower pallet price and a 6% cap on fuel surcharges in September. The signed change sits in someone's email, so the finance team checks October's invoice against the old prices.`,
+          cost: flFiled ? `<b>${money(flR.flagged)}</b> overcharged on one invoice, now that the signed change is filed.` : `Checked against the old prices it looks like <b>${money(flR.flagged)}</b>. File the signed change and the same invoice is <b>$9,486.92</b> over.`,
+          steps: [step('Legal team', 'ai', 'reads the signed change and quotes each new price'), step('Legal team', 'code', 'checks every quote is really in the document; a person confirms and files'), step('Finance team', 'code', 'compares every invoice line with the price in force'), step('Finance team', 'you', 'holds only the difference; AI drafts the dispute letter')] })}
+        ${leak({ n: 3, ic: 'gift', w: 'credit', r: 'invoices', desk: 'Invoice check', title: 'A refund the supplier owes is never claimed',
+          today: bc ? `BrightClean promised a monthly audit score of at least ${bc.slaCredit.target}%. October scored ${bcAct}%, so the contract owes a ${bc.slaCredit.creditPct}% credit. The clause sits in a contract the finance team has never seen, so the invoice is paid in full.` : '',
+          cost: bcR.credit ? `<b>${money(bcR.credit)}</b> owed on October's invoice alone, and September was missed too.` : 'Claimed in this session.',
+          steps: [step('Finance team', 'code', 'compares the service report with the credit clause on every invoice'), step('Finance team', 'you', 'claims the credit; AI drafts the note to the supplier')] })}
       </div>
-      <h2>A five-step path through the prototype</h2>
-      <p class="sub">The steps are ordered so you can see one desk's work change what the next desk sees. About four minutes.</p>
-      <ol class="steps">${steps.map((s, i) => `<li class="${done[i] ? 'done' : ''}"><span class="snum">${done[i] ? '✓' : i + 1}</span><div><b>${s[1]}</b><p>${s[2]}</p></div><button class="btn sm" data-act="go" data-r="${s[0]}">${done[i] ? 'Open again' : 'Open'}</button></li>`).join('')}</ol>
+
+      <h2>Who uses what</h2>
+      <p class="sub">Each part of Afterink is built for one team. Filing a contract in one changes what the others can see.</p>
+      <div class="teams">
+        ${[['legal', 'inbox', 'Inbox', 'File each signed contract. AI reads it, code checks it, a person confirms only the terms that move money.'], ['proc', 'renewals', 'Renewal desk', 'See every deadline that costs money if it passes, and decide each renewal in time.'], ['fin', 'invoices', 'Invoice check', 'Check each invoice line against the signed price, and hold only what does not match.'], ['any', 'ask', 'Ask and Repository', 'Search every contract, or ask in plain words and get an answer that cites the clause.']].map(x => `<button class="teamcard" data-act="go" data-r="${x[1]}"><span class="team-ic">${icon(TEAM[x[0]].ic)}</span><b>${x[2]}</b><span class="team-who">For ${TEAM[x[0]].name} (${esc(TEAM[x[0]].who)})</span><span>${x[3]}</span></button>`).join('')}
+      </div>
+
+      <h2>Where AI is used, and where it is not</h2>
+      <p class="sub">Every screen tags its output with one of these, so you can always see who produced it.</p>
+      <div class="legend">
+        <div>${tag('ai')}<p><b>Reading and writing.</b> Contracts and invoices word the same thing in many ways: "ninety (90) days", "not less than three months". An invoice says "Security officers" where the contract says "Guarding hour". Fixed rules miss that, so AI reads, and drafts letters and answers.</p></div>
+        <div>${tag('code')}<p><b>Dates, money and checks.</b> Deadlines, price comparisons and the check that every AI quote is really in the document follow exact rules. Ordinary code does them the same way every time, with no AI involved.</p></div>
+        <div>${tag('you')}<p><b>Anything that commits the company.</b> Filing a contract, renewing or giving notice, holding a payment. A named person decides, and Afterink never sends anything by itself.</p></div>
+      </div>
+
+      <div class="bar"><button class="btn pri" data-act="tour-start">${icon('play')}Take the two-minute guided tour</button><button class="btn" data-act="go" data-r="why">${icon('pen')}Why Afterink focuses on signed contracts</button></div>
+
+      <h2>Right now in this workspace</h2>
       <div class="tiles">
         <div class="tile"><span class="tl">Decisions due in 90 days</span><span class="tn">${ns.onTime} of ${ns.due}</span><span class="ts">made before the deadline${ns.unfiled ? `, counting ${ns.unfiled} unfiled document${ns.unfiled === 1 ? '' : 's'} as undecided` : ''}</span></div>
-        <div class="tile"><span class="tl">Invoices in the queue</span><span class="tn">${money(it.flagged)}</span><span class="ts">billed above contract, of ${money(it.total)}</span></div>
+        <div class="tile"><span class="tl">Invoices in the queue</span><span class="tn">${money(t.flagged)}</span><span class="ts">billed above contract, of ${money(t.total)}</span></div>
         <div class="tile"><span class="tl">Signed but unfiled</span><span class="tn">${S.inbox.filter(d => d.status === 'new').length}</span><span class="ts">documents the business is already paying against</span></div>
       </div>
       ${S.log.length ? `<h2>What has happened in this session</h2><ul class="logl">${S.log.slice(0, 8).map(l => `<li><span class="chip mute">${esc(DESK[l.desk])}</span> ${esc(l.text)}</li>`).join('')}</ul>` : ''}`;
@@ -465,6 +504,7 @@
       </li>`).join('');
       return `${deskTag('legal')}<h1>Inbox</h1>
       <p class="lede">Signed documents that exist somewhere in the company but are not in the repository. Until one is filed, nobody downstream can act on it.</p>
+      <p class="tags">${tag('ai', 'AI reads each document')} ${tag('code', 'Code checks every quote')} ${tag('you', 'You confirm and file')}</p>
       <p class="sub"><b>How documents get here without anyone remembering to file.</b> Where an e-signature tool is used, the signed copy arrives on its own. Everyone else forwards a signed copy to one address. Each week the ledger lists suppliers that were paid with no filed contract, and Legal Operations goes looking. The three below are the kind that sweep turns up: an attachment in a mailbox, a file on a team drive, a scanned letter.</p>
       ${aiNote()}
       <ul class="doclist">${rows}</ul>
@@ -483,7 +523,7 @@
       let body;
       if (am) {
         const parent = ex.amends ? findContract(ex.amends.parentSupplier) : null;
-        body = `<div class="card"><h3>This amends an existing contract</h3>
+        body = `<div class="card"><div class="cardhead"><h3>This amends an existing contract</h3><span>${tag('ai', 'Changes read by AI')} ${tag('you', 'You confirm each one')}</span></div>
           ${!ex.amends && R.streaming ? '<p class="thinking">Reading the changes…</p>' : !ex.amends || !ex.amends.changes.length ? '<p class="warnp">The reading did not list any changed terms, so there is nothing to apply. Go back to the inbox and read the document again.</p>' : parent ? `<p>Matched to <button class="lnk" data-act="open-contract" data-id="${parent.id}">${parent.id} ${esc(parent.supplier)}, ${esc(parent.title)}</button>. Changes take effect ${fmtDate(ex.amends.effectiveFrom)}.</p>` : `<p class="warnp">No contract for "${esc(ex.amends ? ex.amends.parentSupplier : ex.supplier)}" is in the repository. File the base agreement first.</p>`}
           ${parent && ex.amends ? `<div class="scroll"><table class="tbl"><thead><tr><th>Term</th><th>On file now</th><th>After this amendment</th><th>Source</th><th>Checked</th></tr></thead><tbody>${ex.amends.changes.map((ch, i) => {
             let was, now, label;
@@ -496,7 +536,7 @@
           }).join('')}</tbody></table></div><p class="sub">A change to a price or a cap is always confirmed by a person, whatever the AI's confidence.</p>` : ''}
         </div>${explainCard(parent)}`;
       } else {
-        body = `<p class="sub">For each term: the AI's confidence, then what code found when it looked for the quoted sentence in the document and for the value inside that sentence.</p><div class="card fields">${FIELDS.map(fd => fieldRow(fd)).join('')}
+        body = `<p class="tags">${tag('ai', 'Terms read by AI')} ${tag('code', 'Quotes and values checked by code')}</p><p class="sub">For each term: the AI's confidence, then what code found when it looked for the quoted sentence in the document and for the value inside that sentence.</p><div class="card fields">${FIELDS.map(fd => fieldRow(fd)).join('')}
           <div class="frow${needsCheck('rates') && !R.ok.rates ? ' need' : ''}"><span class="flabel">Rate card <span class="crit-dot" title="Drives a deadline or a price">●</span></span>
             <div class="fval">${ex.rates.length ? `<table class="tbl mini"><tbody>${ex.rates.map(r => `<tr><td>${esc(r.item)}</td><td class="num">${money(r.rate)}</td><td>per ${esc(r.unit)}</td></tr>`).join('')}</tbody></table>` : '<span class="muted">No priced items found</span>'}</div>
             <div class="fmeta">${R.streaming && !ex.done ? '<span class="thinking">Reading…</span>' : ex.rates.length && ex.rates[0].quote && findSpan(R.text, ex.rates[0].quote) ? `${valueInQuote('money', ex.rates[0].rate, ex.rates[0].quote) === false ? chip('warn', 'Quote found, rate not in it') : chip('good', 'Quote checked by code')} <button class="lnk" data-act="hl" data-k="rates">Show source</button>` : (ex.rates.length ? chip('warn', 'Quote not found in document') : '')}</div>
@@ -516,7 +556,7 @@
     repository() {
       const unfiled = S.inbox.filter(d => d.status === 'new').length;
       const fs = [['all', 'All'], ['auto', 'Renews automatically'], ['due', 'Decision due in 90 days'], ['uncapped', 'Uncapped price rise']];
-      return `<p class="desk">Shared by every desk</p><h1>Repository</h1>
+      return `${deskTag('any')}<h1>Repository</h1>
       <p class="lede">One record per signed contract. Each term on file links back to the sentence it was read from, so nobody has to trust a spreadsheet cell.</p>
       ${unfiled ? `<p class="note">${unfiled} signed ${unfiled === 1 ? 'document is' : 'documents are'} not filed yet. <button class="lnk" data-act="go" data-r="inbox">Open the inbox</button></p>` : ''}
       <div class="bar"><input id="repo-q" class="inp" type="search" placeholder="Search supplier, type, owner or any word in the contract" value="${esc(T.repoQ)}" data-inp="repo" aria-label="Search contracts">
@@ -536,8 +576,8 @@
       <p class="desk"><span class="mono">${c.id}</span> · ${esc(c.type)} · ${esc(c.category)}</p><h1>${esc(c.supplier)}</h1>
       <p class="sub">${esc(c.title)} · Owner: ${esc(c.owner)} · ${chip('good', 'Verified')} ${c.source === 'seed' ? '' : chip('info', 'Filed in this session')} ${it && it.left <= 150 ? renewChip(it) : ''}</p>
       <div class="split"><div>
-        <div class="card"><h3>Key terms</h3><dl class="kv">${FIELDS.filter(fd => !(fd.opt && c.f[fd.k] == null && !c.prov[fd.k])).map(fd => `<div><dt>${fd.label}</dt><dd>${fmtVal(fd, c.f[fd.k])}${c.prov[fd.k] ? ` <button class="lnk" data-act="hl" data-k="${fd.k}">Show source</button>` : ''}${c.notes[fd.k] ? `<span class="fnote">${esc(c.notes[fd.k])}</span>` : ''}</dd></div>`).join('')}
-          ${nb ? `<div><dt>Last day to give notice</dt><dd><b>${fmtDate(nb)}</b><span class="fnote">Calculated: term end minus ${c.f.noticeDays} days.</span></dd></div>` : ''}</dl></div>
+        <div class="card"><div class="cardhead"><h3>Key terms</h3>${tag('ai', 'Read by AI, confirmed by a person')}</div><dl class="kv">${FIELDS.filter(fd => !(fd.opt && c.f[fd.k] == null && !c.prov[fd.k])).map(fd => `<div><dt>${fd.label}</dt><dd>${fmtVal(fd, c.f[fd.k])}${c.prov[fd.k] ? ` <button class="lnk" data-act="hl" data-k="${fd.k}">Show source</button>` : ''}${c.notes[fd.k] ? `<span class="fnote">${esc(c.notes[fd.k])}</span>` : ''}</dd></div>`).join('')}
+          ${nb ? `<div><dt>Last day to give notice</dt><dd><b>${fmtDate(nb)}</b><span class="fnote">${tag('code')} Term end minus ${c.f.noticeDays} days.</span></dd></div>` : ''}</dl></div>
         <div class="card"><h3>Rate card</h3>${c.rates.length ? `<div class="scroll"><table class="tbl mini"><thead><tr><th>Item</th><th class="num">Rate</th><th>Unit</th><th>Note</th></tr></thead><tbody>${c.rates.map(r => `<tr><td>${esc(r.item)}</td><td class="num">${money(r.rate)}</td><td>${esc(r.unit)}</td><td>${r.was != null ? `Was ${money(r.was)} until ${esc(r.src)}` : esc(r.note || '')}</td></tr>`).join('')}</tbody></table></div>${c.prov.rates ? '<button class="lnk" data-act="hl" data-k="rates">Show source</button>' : ''}` : '<p class="muted">No priced items.</p>'}</div>
         ${c.signals.length ? `<div class="card"><h3>Signals from other systems</h3><ul class="sig">${c.signals.map(s => `<li>${chip(s.tone, s.tone === 'good' ? 'OK' : s.tone === 'crit' ? 'Act' : 'Watch')} <span><b>${esc(s.label)}</b><br>${esc(s.value)}</span></li>`).join('')}</ul></div>` : ''}
         ${c.risks && c.risks.length ? `<div class="card"><h3>Flagged when filed</h3><ul>${c.risks.map(r => `<li>${esc(r)}</li>`).join('')}</ul></div>` : ''}
@@ -555,14 +595,14 @@
 
     ask() {
       const A = T.ask;
-      return `<p class="desk">Open to every desk</p><h1>Ask</h1>
+      return `${deskTag('any')}<h1>Ask</h1>
       <p class="lede">Ask about the contracts in plain words. The answer is written only from the verified repository, and each claim carries the contract and clause it rests on.</p>
       ${aiNote()}
       <div class="bar"><input id="ask-q" class="inp" type="text" placeholder="For example: what notice do we owe Vaultline?" value="${esc(A ? A.q : '')}" aria-label="Your question"><button class="btn pri" data-act="ask" ${T.busy === 'ask' ? 'disabled' : ''}>Ask</button></div>
       <div class="sugg">${SUGGESTED.map(s => `<button class="chipb" data-act="ask-s" data-id="${s.id}">${esc(s.q)}</button>`).join('')}</div>
-      ${A ? `<div class="card answer"><p class="aq">${esc(A.q)}</p><div id="ask-out">${A.text ? fmtAnswer(A.text) : '<span class="thinking">Thinking…</span>'}</div>
+      ${A ? `<div class="card answer"><div class="cardhead"><p class="aq">${esc(A.q)}</p>${A.mode === 'saved' || A.mode === 'none' ? tag('code', 'Built by code from the filed terms') : tag('ai', 'Answer written by AI')}</div><div id="ask-out">${A.text ? fmtAnswer(A.text) : '<span class="thinking">Thinking…</span>'}</div>
         <p class="sub" id="ask-meta">${A.done ? (A.mode === 'live' ? `Written live by ${esc(A.model || AI.modelName || 'the AI')} from the clauses below${A.ms ? ' in ' + fmtMs(A.ms) : ''}.` : A.mode === 'saved' ? `${A.err ? esc(A.err) + ' ' : ''}This answer was built by the page from the filed terms, without the AI.` : esc(A.err || '')) : ''}</p></div>
-        ${A.src && A.src.length ? `<h2>Clauses the answer was drawn from</h2><ul class="srcl">${A.src.map(c => `<li><button class="cite" data-act="cite" data-id="${c.cid}" data-sec="${c.sec}">${c.cid} §${c.sec}</button> <span class="muted">${esc(c.supplier)}</span><p>${esc(c.text.length > 260 ? c.text.slice(0, 260) + '…' : c.text)}</p></li>`).join('')}</ul>` : ''}` : ''}`;
+        ${A.src && A.src.length ? `<h2>Clauses the answer was drawn from</h2><p class="tags">${tag('code', 'Clauses found by code')}</p><ul class="srcl">${A.src.map(c => `<li><button class="cite" data-act="cite" data-id="${c.cid}" data-sec="${c.sec}">${c.cid} §${c.sec}</button> <span class="muted">${esc(c.supplier)}</span><p>${esc(c.text.length > 260 ? c.text.slice(0, 260) + '…' : c.text)}</p></li>`).join('')}</ul>` : ''}` : ''}`;
     },
 
     renewals() {
@@ -572,6 +612,7 @@
       const ns = northStar();
       return `${deskTag('proc')}<h1>Renewal desk</h1>
       <p class="lede">Every contract with a date that costs money if it passes unseen, ordered by the last day someone can still act.</p>
+      <p class="tags">${tag('code', 'Deadlines calculated by code')} ${tag('ai', 'Briefs and letters drafted by AI')} ${tag('you', 'You decide each renewal')}</p>
       <div class="tiles">
         <div class="tile"><span class="tl">Decided before the deadline</span><span class="tn">${ns.onTime} of ${ns.due}</span><span class="ts">dates falling in the next 90 days${ns.unfiled ? `. ${ns.unfiled} of them are unfiled documents, counted as undecided until filed` : ''}</span></div>
         <div class="tile"><span class="tl">Renews if nobody acts</span><span class="tn">${money(atStake)}</span><span class="ts">committed spend, next 90 days, undecided</span></div>
@@ -594,7 +635,7 @@
       return `${deskTag('proc')}<p><button class="lnk" data-act="go" data-r="renewals">← Back to renewal desk</button></p>
       <h1>${esc(c.supplier)}</h1><p class="sub">${esc(c.title)} · <button class="lnk" data-act="open-contract" data-id="${c.id}">${c.id}</button> · Owner: ${esc(c.owner)} · ${renewChip(it)}</p>
       <div class="split"><div>
-        <div class="card"><h3>The facts, from the signed text</h3><dl class="kv">
+        <div class="card"><div class="cardhead"><h3>The facts, from the signed text</h3>${tag('code', 'Deadline calculated by code')}</div><dl class="kv">
           <div><dt>${it.kind === 'expiry' ? 'Contract ends' : 'Current term ends'}</dt><dd>${fmtDate(c.f.termEnd)}</dd></div>
           ${it.kind !== 'expiry' ? `<div><dt>Last day to give notice</dt><dd><b>${noticeBy(c) ? fmtDate(noticeBy(c)) : 'Not stated'}</b> ${it.kind === 'open' ? `(${it.left} days left)` : it.kind === 'closed' ? '(passed)' : ''}${p.noticeDays ? `<span class="fnote">"${esc(p.noticeDays)}"</span>` : ''}</dd></div>
           <div><dt>If nobody acts</dt><dd>Renews for ${c.f.renewalMonths || 12} months, committing ${money(it.commit)}${it.uplift ? `, including up to ${money(it.uplift)} of increase` : ''}${p.autoRenew ? `<span class="fnote">"${esc(p.autoRenew)}"</span>` : ''}</dd></div>
@@ -602,11 +643,11 @@
           <div><dt>How notice must be given</dt><dd>${esc(c.f.noticeMethod || 'Not stated')}</dd></div></dl></div>
         <div class="card"><h3>Signals from other systems</h3>${c.signals.length ? `<ul class="sig">${c.signals.map(s => `<li>${chip(s.tone, s.tone === 'good' ? 'OK' : s.tone === 'crit' ? 'Act' : 'Watch')} <span><b>${esc(s.label)}</b><br>${esc(s.value)}</span></li>`).join('')}</ul>` : '<p class="muted">None on file.</p>'}<p class="sub">Assumed integrations: single sign-on, the ledger, service reports. In this prototype they are sample values.</p></div>
       </div><div>
-        <div class="card"><div class="cardhead"><h3>Renewal brief</h3>${B.source === 'live' ? chip('info', 'Written live by ' + (B.model || AI.modelName || 'the AI')) : chip('mute', 'Saved AI brief')}</div>
+        <div class="card"><div class="cardhead"><h3>Renewal brief</h3><span>${tag('ai', B.source === 'live' ? 'Written live by AI' : 'Written by AI (saved)')}</span></div>
           ${T.busy === 'brief:' + c.id ? '<p class="thinking">Writing the brief…</p>' : `<p class="headline">${esc(B.headline)}</p><ul>${(B.why || []).map(w => `<li>${esc(w)}</li>`).join('')}</ul>
           ${B.asks && B.asks.length ? `<p class="mini-h">Ask the supplier for</p><ul>${B.asks.map(a => `<li>${esc(a)}</li>`).join('')}</ul>` : ''}
           ${live() && !d ? `<button class="btn sm" data-act="brief" data-id="${c.id}">${B.source === 'live' ? 'Write it again' : 'Write a fresh brief with AI'}</button>` : ''}`}</div>
-        <div class="card"><h3>${d ? 'Decision on record' : 'Your decision'}</h3>
+        <div class="card"><div class="cardhead"><h3>${d ? 'Decision on record' : 'Your decision'}</h3>${tag('you')}</div>
           ${d ? `<p>${chip(d.onTime ? 'good' : 'warn', d.onTime ? 'Made before the deadline' : 'Made after the notice date')} <b>${esc((ch.find(x => x[0] === d.choice) || ['', d.choice])[1])}</b>, recorded ${fmtDate(d.at)}.</p>
             <p class="sub">${d.sent ? 'Marked as sent by the owner.' : 'The notice is queued for the contract owner to send. This product never sends it.'}</p>
             <pre class="letter">${esc(d.letter)}</pre>
@@ -623,7 +664,8 @@
     invoices() {
       const t = invoiceTotals();
       return `${deskTag('fin')}<h1>Invoice check</h1>
-      <p class="lede">Each invoice line is compared with the rate card on file. The arithmetic is done by code. AI is used only to read a pasted invoice and to draft the dispute.</p>
+      <p class="lede">Each invoice line is compared with the price in the signed contract before anyone pays it.</p>
+      <p class="tags">${tag('code', 'Every line compared by code')} ${tag('ai', 'Pasted invoices and dispute letters by AI')} ${tag('you', 'You decide what to pay')}</p>
       <div class="tiles">
         <div class="tile"><span class="tl">Billed above contract</span><span class="tn">${money(t.flagged)}</span><span class="ts">across ${S.invoices.length} invoices worth ${money(t.total)}</span></div>
         <div class="tile"><span class="tl">Held under dispute</span><span class="tn">${money(t.held)}</span><span class="ts">approved by Accounts Payable</span></div>
@@ -647,6 +689,7 @@
       <h1>Invoice <span class="mono">${esc(inv.id)}</span></h1>
       <p class="sub">${esc(inv.supplier)} · dated ${fmtDate(inv.date)} · ${esc(inv.periodLabel || '')} · ${invChip(inv, r)}${inv.parsed ? ' ' + chip('info', 'Lines read by AI') : ''}</p>
       ${c ? `<p class="note">Checked against <button class="lnk" data-act="open-contract" data-id="${c.id}">${c.id} ${esc(c.title)}</button>${c.amendments.length ? `, including ${c.amendments.length} filed amendment${c.amendments.length > 1 ? 's' : ''}` : ''}.</p>` : ''}
+      <p class="tags">${tag('code', 'Compared with the contract by code')}${inv.parsed ? ' ' + tag('ai', 'Lines read from the pasted invoice by AI') : ''}</p>
       <div class="scroll"><table class="tbl"><thead><tr><th>Line</th><th class="num">Qty</th><th class="num">Billed rate</th><th class="num">Contract rate</th><th class="num">Billed</th><th class="num">Agreed</th><th class="num">Difference</th></tr></thead><tbody>
       ${(c ? r.rows : inv.lines.map(ln => ({ ln, tone: 'mute', note: '' }))).map(row => `<tr class="${row.tone === 'crit' ? 'bad' : ''}"><td>${esc(row.ln.desc)}${row.note ? `<span class="fnote">${esc(row.note)}</span>` : ''}${row.quote && row.tone === 'crit' ? `<span class="fnote q">"${esc(row.quote)}"</span>` : ''}</td>
         <td class="num">${row.ln.qty != null ? Number(row.ln.qty).toLocaleString('en-US') : ''}</td><td class="num">${row.ln.kind === 'surcharge' ? row.ln.pct + '%' : money(row.ln.unitPrice)}</td><td class="num">${row.exp == null ? '—' : (typeof row.exp === 'number' ? money(row.exp) : esc(row.exp))}</td>
@@ -654,10 +697,11 @@
       </tbody><tfoot><tr><td colspan="4">Total</td><td class="num">${money(inv.total)}</td><td class="num">${c ? money(r2(inv.total - r.over)) : '—'}</td><td class="num">${r.over ? `<b class="critt">${money(r.over)}</b>` : '—'}</td></tr></tfoot></table></div>
       ${r.findings.map(f => `<div class="finding ${f.tone}">${chip(f.tone, f.tone === 'crit' ? 'Act' : 'Query')} <div><b>${esc(f.title)}</b><p>${esc(f.text)}</p>${f.quote ? `<p class="fnote q">"${esc(f.quote)}"</p>` : ''}</div></div>`).join('')}
       ${!c ? `<div class="callout"><b>This is the problem in one screen.</b> The invoice is real and due, and the signed agreement exists, but it sits in a shared drive where Accounts Payable cannot see it. <button class="lnk" data-act="go" data-r="inbox">Ask Legal Operations to file it from the inbox</button>, then come back.</div>` : ''}
-      <div class="card"><h3>${closed ? 'Outcome' : 'Your call'}</h3>
+      <div class="card"><div class="cardhead"><h3>${closed ? 'Outcome' : 'Your call'}</h3>${tag('you')}</div>
       ${closed ? `<p>${inv.status === 'disputed' ? `Dispute queued. ${money(r.flagged)} is held and ${money(r2(inv.total - r.flagged))} is released for payment on the agreed terms.` : inv.status === 'approved' ? 'Approved for payment in full.' : 'Released for payment without a contract check. This is logged as a blind payment.'}</p>${inv.dispute ? `<pre class="letter">${esc(inv.dispute)}</pre>` : ''}<div class="bar"><button class="btn" data-act="inv-reopen" data-id="${esc(inv.id)}">Reopen</button></div>`
         : r.state === 'variance' ? `<p>Undisputed amount: <b>${money(r2(inv.total - r.flagged))}</b>. In question: <b class="critt">${money(r.flagged)}</b>.</p>
           <label class="mini-h" for="dispute">Dispute note to the supplier. Edit before you queue it.</label>
+          <p class="tags">${T.aiDraft[inv.id] ? tag('ai', 'Redrafted by AI') : tag('code', 'Drafted by code from the checks')}</p>
           <textarea id="dispute" class="inp ta" rows="11" data-inp="dispute" data-id="${esc(inv.id)}">${esc(dis != null ? dis : tplDispute(inv, r))}</textarea>
           <div class="bar">${T.busy === 'dispute:' + inv.id ? '<span class="thinking">Drafting…</span>' : (live() ? `<button class="btn" data-act="dispute-ai" data-id="${esc(inv.id)}">Redraft with AI</button>` : '')}<button class="btn pri" data-act="inv-dispute" data-id="${esc(inv.id)}">Queue dispute and pay the undisputed amount</button><button class="btn" data-act="inv-approve" data-id="${esc(inv.id)}">Pay in full anyway</button></div>
           <p class="sub">The supplier still gets paid on time for everything that matches. Only the difference is held.</p>`
@@ -709,7 +753,7 @@
     /* Count only terms that have arrived: a term still being read has not been accepted. */
     const auto = am ? 0 : FIELDS.filter(fd => fd.crit && !R.ex.fields[fd.k].pending && !needsCheck(fd.k)).length;
     const unread = am && R.ex.amends && R.ex.amends.changes.some(unreadChange);
-    return `<div class="bar filebar"><button class="btn pri" data-act="file" ${p.length || R.streaming ? 'disabled' : ''}>${am ? 'Apply amendment to the contract' : 'File in the repository'}</button>
+    return `<div class="bar filebar">${tag('you')}<button class="btn pri" data-act="file" ${p.length || R.streaming ? 'disabled' : ''}>${am ? 'Apply amendment to the contract' : 'File in the repository'}</button>
       <span class="sub">${R.streaming ? 'Still reading the document.' : p[0] === 'nochanges' ? 'The reading found no changed terms. Go back to the inbox and read the document again.' : p[0] === 'parent' ? 'The base agreement has to be filed first.' : unread ? 'A changed value could not be read. Go back to the inbox and read the document again.' : p.length ? `${p.length} ${p.length === 1 ? 'term still needs' : 'terms still need'} your check.` : 'Ready to file.'}${am || R.streaming ? '' : ` ${auto} of ${FIELDS.filter(f => f.crit).length} deadline and price terms were accepted without review.`}</span></div>`;
   }
   function inputFor(fd, f) {
@@ -736,7 +780,7 @@
     const R = T.review, ex = R.ex;
     const E = R.explain;
     if (!parent || !ex.amends || R.streaming || (!live() && !E)) return '';
-    return `<div class="card"><div class="cardhead"><h3>In plain English</h3>${E && E.status === 'done' ? chip('info', 'Written live by ' + (E.model || AI.modelName || 'the AI')) : ''}</div>
+    return `<div class="card"><div class="cardhead"><h3>In plain English</h3>${tag('ai', 'Written by AI')}</div>
       ${E ? (E.status === 'failed' ? `<p class="sub">${esc(E.err)}</p>` : `<p id="explain-out">${E.text ? esc(E.text) : '<span class="thinking">Writing…</span>'}</p>`) : '<p class="sub">A plain-English reading of what changes and what stays, for the person checking the table above. The table is what gets applied.</p>'}
       ${live() && !(E && E.status === 'running') ? `<button class="btn sm" data-act="explain">${E && E.status === 'done' ? 'Write it again' : 'Explain with AI'}</button>` : ''}</div>`;
   }
@@ -744,7 +788,7 @@
     const F = T.find;
     return `<div class="bar"><input id="find-q" class="inp" type="text" placeholder="Or ask in plain words, for example: which contracts renew in the next 90 days with an uncapped increase?" value="${esc(F ? F.q : '')}" aria-label="Find contracts in plain words" ${live() ? '' : 'disabled'}><button class="btn pri" data-act="find" ${!live() || (F && F.status === 'running') ? 'disabled' : ''}>Find with AI</button></div>
       ${!live() ? '<p class="sub">Finding by plain words needs the live AI server. The search box and filters above work without it.</p>' : ''}
-      ${F ? (F.status === 'running' ? '<p class="thinking">Turning the question into a filter…</p>' : F.status === 'failed' ? `<p class="sub">${esc(F.err)}</p>` : !F.filters.length ? `<div class="findbox"><p>No filter could be built from these words, so the list below is not filtered.${F.unsupported ? ' ' + esc(F.unsupported) : ''} Try naming a term, such as a notice date, a price rise, an annual value or an owner.</p><p class="sub"><button class="lnk" data-act="find-clear">Clear</button></p></div>` : `<div class="findbox"><p>${esc(F.explanation)}</p><div class="sugg">${F.filters.map(f => `<span class="fchip">${esc(filterWords(f))}</span>`).join(' ')}${F.match === 'any' && F.filters.length > 1 ? '<span class="fchip">any of these</span>' : ''}</div>${F.unsupported ? `<p class="sub">Not covered by the filter: ${esc(F.unsupported)}</p>` : ''}<p class="sub">The AI wrote this filter from your words. Code ran it over every contract, so the list is exact. <button class="lnk" data-act="find-clear">Clear</button></p></div>`) : ''}`;
+      ${F ? (F.status === 'running' ? '<p class="thinking">Turning the question into a filter…</p>' : F.status === 'failed' ? `<p class="sub">${esc(F.err)}</p>` : !F.filters.length ? `<div class="findbox"><p>No filter could be built from these words, so the list below is not filtered.${F.unsupported ? ' ' + esc(F.unsupported) : ''} Try naming a term, such as a notice date, a price rise, an annual value or an owner.</p><p class="sub"><button class="lnk" data-act="find-clear">Clear</button></p></div>` : `<div class="findbox"><p class="tags">${tag('ai', 'Filter written by AI from your words')} ${tag('code', 'Run over every contract by code')}</p><p>${esc(F.explanation)}</p><div class="sugg">${F.filters.map(f => `<span class="fchip">${esc(filterWords(f))}</span>`).join(' ')}${F.match === 'any' && F.filters.length > 1 ? '<span class="fchip">any of these</span>' : ''}</div>${F.unsupported ? `<p class="sub">Not covered by the filter: ${esc(F.unsupported)}</p>` : ''}<p class="sub">The AI wrote this filter from your words. Code ran it over every contract, so the list is exact. <button class="lnk" data-act="find-clear">Clear</button></p></div>`) : ''}`;
   }
   function repoRows() {
     const q = T.repoQ.trim().toLowerCase();
@@ -881,7 +925,7 @@
   }
   const ACT = {
     go: d => go(d.r),
-    reset() { const rc = $('#reset-confirm'); if (rc) rc.hidden = true; S = fresh(); S.route = location.hash.slice(1) && VIEWS[location.hash.slice(1)] ? location.hash.slice(1) : 'start'; Object.assign(T, { hl: null, busy: null, review: null, ask: null, briefs: {}, choice: {}, letters: {}, disputes: {}, repoQ: '', repoF: 'all', pasteInv: '', pasteText: '', find: null, citeText: null }); save(); render(); toast('Demo data restored.'); },
+    reset() { const rc = $('#reset-confirm'); if (rc) rc.hidden = true; S = fresh(); S.route = location.hash.slice(1) && VIEWS[location.hash.slice(1)] ? location.hash.slice(1) : 'start'; Object.assign(T, { hl: null, busy: null, review: null, ask: null, briefs: {}, choice: {}, letters: {}, disputes: {}, repoQ: '', repoF: 'all', pasteInv: '', pasteText: '', find: null, citeText: null, aiDraft: {} }); save(); render(); toast('Demo data restored.'); },
     'paste-sample'() { T.pasteText = SAMPLE_CONTRACT_TEXT; render(); const ta = $('#paste-contract'); if (ta) ta.scrollIntoView({ block: 'center' }); },
     explain: explainAmendment,
     find() { findInWords($('#find-q').value); },
@@ -922,7 +966,7 @@
     async 'dispute-ai'(d) {
       const inv = S.invoices.find(i => i.id === d.id), r = checkInvoice(inv); T.busy = 'dispute:' + d.id; render();
       const facts = tplDispute(inv, r);
-      try { const out = await aiCall('dispute', { facts }, t => { const el = $('#dispute'); if (el && el.dataset.id === d.id) el.value = t; }); T.disputes[d.id] = out.text.trim(); }
+      try { const out = await aiCall('dispute', { facts }, t => { const el = $('#dispute'); if (el && el.dataset.id === d.id) el.value = t; }); T.disputes[d.id] = out.text.trim(); T.aiDraft[d.id] = true; }
       catch (e) { toast(aiErr(e)); }
       T.busy = null; render();
     },
@@ -968,15 +1012,34 @@
       why: "The north star counts silence as a miss. Corvid's notice date passed before the product existed, so the score can never reach 100% on old misses, and unfiled documents count as undecided.",
       tryIt: () => 'Check how the tiles moved with what you did, then scroll to the table of what would make us rethink the approach.' }
   ];
-  const TOUR = { on: false, i: 0 };
+  /* One walkthrough per money leak, started from the cards on the Start page. */
+  const fl = () => checkInvoice(S.invoices.find(i => i.id === 'FL-20931')).flagged;
+  const WALKS = {
+    renewal: { label: 'Missed renewal, step by step', steps: [
+      { r: 'renewals', t: '#main .scroll', title: 'The buying team sees every deadline', why: 'Code worked out each last day to say no from the signed terms, and lists them by days left. Cloudmetric is near the top.', tryIt: () => 'Find Cloudmetric in the list, then press Next.' },
+      { r: 'renewal', sel: { renewal: 'C-1001' }, t: '.split > div:first-child .card', title: 'The deadline comes from the signed text', why: 'The last day to give notice is calculated by code from the term end and the notice period, and each fact shows the sentence it came from. Nobody typed it.', tryIt: () => 'Read the quoted clause under "Last day to give notice", then press Next.' },
+      { r: 'renewal', sel: { renewal: 'C-1001' }, t: '.split > div:last-child', title: 'AI drafts, a person decides', why: 'The AI writes a short brief and a draft notice from the contract and the seat usage. Nothing is sent: the buying team records a decision and the contract owner sends the notice.', tryIt: () => 'Pick an option, edit the letter if you like, then click Record decision.' }
+    ] },
+    overcharge: { label: 'Overcharged invoice, step by step', steps: [
+      { r: 'invoice', sel: { invoice: 'FL-20931' }, t: '#main .scroll', title: 'Today the invoice looks almost right', why: 'Checked against the prices the finance team knows about, Fleetline\'s October invoice is only slightly over. The signed price cut is still sitting in an email.', tryIt: () => filed('D-1') ? `The price change is already filed, so this invoice now shows ${money(fl())} over contract. Press Next.` : `It shows ${money(fl())} over contract. Press Next to file the signed change.` },
+      { r: 'inbox', also: ['review', 'contract'], t: '.doclist', title: 'The legal team files the signed change', why: 'The AI reads the amendment and quotes each changed term. Code checks every quote is really in the document. A person confirms the two changes.', tryIt: () => filed('D-1') ? 'Already filed. Press Next.' : (live() ? 'Click Read with AI on the Fleetline amendment, tick both changes, then click Apply amendment.' : 'Click Show saved reading on the Fleetline amendment, tick both changes, then click Apply amendment.') },
+      { r: 'invoice', sel: { invoice: 'FL-20931' }, t: '#main .scroll', title: 'The finance team sees the real overcharge', why: 'With the new prices on file, code compares every line again and finds the true overcharge on the same invoice.', tryIt: () => filed('D-1') ? `It now shows ${money(fl())} over contract. Queue the dispute: only the difference is held and the rest is paid on time.` : 'File the Fleetline amendment first (previous step), then come back.' }
+    ] },
+    credit: { label: 'Unclaimed refund, step by step', steps: [
+      { r: 'invoice', sel: { invoice: 'BC-1187' }, t: '.finding', title: 'The refund nobody claimed', why: 'BrightClean promised a monthly audit score of at least 90%. October scored 86%, so the contract owes a credit. Code compared the service report with the credit clause and found the invoice leaves it out.', tryIt: () => 'Read the "Service credit not applied" finding and the quoted clause, then press Next.' },
+      { r: 'contract', sel: { contract: 'C-1003' }, t: '.split > div:first-child .card', title: 'The promise was always in the contract', why: 'The credit clause sits in a contract the finance team had never seen. Now every team can find it, with the sentence it came from.', tryIt: () => 'Click Show source next to "Service levels and credits".' }
+    ] }
+  };
+  const TOUR = { on: false, i: 0, steps: TOUR_STEPS, label: 'Guided tour' };
+  function startTour(steps, label) { TOUR.steps = steps; TOUR.label = label; $('#intro').hidden = true; tourGo(0); }
   function tourHere() {
-    const st = TOUR_STEPS[TOUR.i];
+    const st = TOUR.steps[TOUR.i];
     if (S.route === st.r) return !st.sel || Object.keys(st.sel).every(k => S.sel[k] === st.sel[k]);
     return (st.also || []).includes(S.route);
   }
   function tourGo(i) {
-    TOUR.on = true; TOUR.i = Math.max(0, Math.min(TOUR_STEPS.length - 1, i));
-    const st = TOUR_STEPS[TOUR.i];
+    TOUR.on = true; TOUR.i = Math.max(0, Math.min(TOUR.steps.length - 1, i));
+    const st = TOUR.steps[TOUR.i];
     if (st.sel) Object.assign(S.sel, st.sel);
     go(st.r);
     const t = $(st.t); if (t) t.scrollIntoView({ block: 'center' });
@@ -986,10 +1049,10 @@
     $$('.tour-target').forEach(n => n.classList.remove('tour-target'));
     document.body.classList.toggle('touring', TOUR.on);
     if (!TOUR.on) { el.hidden = true; return; }
-    const st = TOUR_STEPS[TOUR.i], here = tourHere(), last = TOUR.i === TOUR_STEPS.length - 1;
+    const st = TOUR.steps[TOUR.i], here = tourHere(), last = TOUR.i === TOUR.steps.length - 1;
     el.hidden = false;
-    el.innerHTML = `<p class="tour-step">Guided tour · stop ${TOUR.i + 1} of ${TOUR_STEPS.length}</p>
-      <div class="tour-dots" aria-hidden="true">${TOUR_STEPS.map((s, k) => `<span class="${k <= TOUR.i ? 'on' : ''}"></span>`).join('')}</div>
+    el.innerHTML = `<p class="tour-step">${esc(TOUR.label)} · stop ${TOUR.i + 1} of ${TOUR.steps.length}</p>
+      <div class="tour-dots" aria-hidden="true">${TOUR.steps.map((s, k) => `<span class="${k <= TOUR.i ? 'on' : ''}"></span>`).join('')}</div>
       <h3 class="tour-h">${esc(st.title)}</h3>
       ${here ? `<p class="tour-why"><b>Why this matters.</b> ${esc(st.why)}</p><p class="tour-try"><b>Try this.</b> ${esc(st.tryIt())}</p>` : '<p class="tour-why">You moved to another screen. The tour is waiting at this stop.</p>'}
       <div class="tour-nav">${here ? '' : '<button class="btn sm pri" data-act="tour-here">Back to this stop</button>'}<button class="btn sm" data-act="tour-prev" ${TOUR.i === 0 ? 'disabled' : ''}>Back</button>${last ? '<button class="btn sm pri" data-act="tour-end">Finish</button>' : `<button class="btn sm${here ? ' pri' : ''}" data-act="tour-next">Next</button>`}<button class="lnk tour-x" data-act="tour-end">Exit tour</button></div>`;
@@ -999,12 +1062,13 @@
   function introSeen() { try { localStorage.setItem(IKEY, '1'); } catch (e) { /* storage unavailable */ } $('#intro').hidden = true; }
   function introInit() { let seen = false; try { seen = localStorage.getItem(IKEY) === '1'; } catch (e) { seen = false; } if (!seen) { $('#intro').hidden = false; const b = $('#intro-start'); if (b) b.focus(); } }
   Object.assign(ACT, {
-    'tour-start'() { $('#intro').hidden = true; tourGo(0); },
+    'tour-start'() { startTour(TOUR_STEPS, 'Guided tour'); },
+    walk(d) { const w = WALKS[d.w]; if (w) startTour(w.steps, w.label); },
     'tour-next'() { tourGo(TOUR.i + 1); },
     'tour-prev'() { tourGo(TOUR.i - 1); },
     'tour-here'() { tourGo(TOUR.i); },
-    'tour-end'() { TOUR.on = false; tourPaint(); toast('Tour closed. Restart it any time from Guided tour in the top bar.'); },
-    'intro-tour'() { introSeen(); tourGo(0); },
+    'tour-end'() { TOUR.on = false; tourPaint(); toast('Walkthrough closed. Start another from the Start page, or the guided tour from the top bar.'); },
+    'intro-tour'() { introSeen(); startTour(TOUR_STEPS, 'Guided tour'); },
     'intro-skip'() { introSeen(); },
     'reset-ask'() { const rc = $('#reset-confirm'); rc.hidden = !rc.hidden; if (!rc.hidden) $('#reset-yes').focus(); },
     'reset-cancel'() { $('#reset-confirm').hidden = true; }
@@ -1044,14 +1108,24 @@
     sun: '<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/>',
     moon: '<path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9z"/>',
     play: '<circle cx="12" cy="12" r="9"/><path d="m10 8.5 5.5 3.5-5.5 3.5z"/>',
-    reset: '<path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/>'
+    reset: '<path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/>',
+    scale: '<path d="M12 3v18M7 21h10M5 7h14"/><path d="M5 7l-3 7a3 3 0 0 0 6 0z"/><path d="M19 7l-3 7a3 3 0 0 0 6 0z"/>',
+    cart: '<circle cx="9" cy="20" r="1.5"/><circle cx="18" cy="20" r="1.5"/><path d="M2 3h3l2.5 12h12L22 7H6.2"/>',
+    wallet: '<path d="M20 7V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h15a1 1 0 0 0 1-1v-4"/><path d="M21 11h-5a2 2 0 0 0 0 4h5z"/>',
+    sparkle: '<path d="M12 3l1.8 4.7 4.7 1.8-4.7 1.8L12 16l-1.8-4.7-4.7-1.8 4.7-1.8z"/><path d="M19 15l.8 2.2 2.2.8-2.2.8L19 21l-.8-2.2-2.2-.8 2.2-.8z"/>',
+    calc: '<rect x="5" y="3" width="14" height="18" rx="2"/><path d="M8 7h8"/><path d="M8.5 11h.01M12 11h.01M15.5 11h.01M8.5 14.5h.01M12 14.5h.01M15.5 14.5h.01M8.5 18h.01M12 18h.01M15.5 18h.01"/>',
+    usercheck: '<circle cx="9" cy="7" r="4"/><path d="M2 21v-2a4 4 0 0 1 4-4h6a4 4 0 0 1 4 4v2"/><path d="m16 11 2 2 4-4"/>',
+    clock: '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
+    coin: '<circle cx="12" cy="12" r="9"/><path d="M14.5 9a2.5 2 0 0 0-2.5-1.5c-1.5 0-2.5.8-2.5 2s1 1.7 2.5 2 2.5.8 2.5 2-1 2-2.5 2a2.5 2 0 0 1-2.5-1.5M12 6v1.5M12 16.5V18"/>',
+    gift: '<rect x="3" y="8" width="18" height="4" rx="1"/><path d="M12 8v13M5 12v9h14v-9"/><path d="M7.5 8a2.5 2.5 0 0 1 0-5C10 3 12 8 12 8s2-5 4.5-5a2.5 2.5 0 0 1 0 5"/>'
   };
   const icon = name => ICON[name] ? `<svg class="ic" viewBox="0 0 24 24" aria-hidden="true" focusable="false">${ICON[name]}</svg>` : '';
   const NAV = [
-    { g: 'Workspace' }, { r: 'start', t: 'Start here', ic: 'home' }, { r: 'inbox', t: 'Inbox', ic: 'inbox', alias: ['review'], ct: () => S.inbox.filter(d => d.status === 'new').length },
-    { r: 'repository', t: 'Repository', ic: 'archive', alias: ['contract'] }, { r: 'ask', t: 'Ask', ic: 'chat' },
-    { r: 'renewals', t: 'Renewal desk', ic: 'calendar', alias: ['renewal'], ct: () => renewalItems(90).filter(it => !S.decisions[it.c.id]).length },
-    { r: 'invoices', t: 'Invoice check', ic: 'receipt', alias: ['invoice'], ct: () => S.invoices.filter(i => !['disputed', 'approved', 'blind'].includes(i.status)).length },
+    { r: 'start', t: 'Start here', ic: 'home' },
+    { g: 'Legal team' }, { r: 'inbox', t: 'Inbox', ic: 'inbox', alias: ['review'], ct: () => S.inbox.filter(d => d.status === 'new').length },
+    { g: 'Buying team' }, { r: 'renewals', t: 'Renewal desk', ic: 'calendar', alias: ['renewal'], ct: () => renewalItems(90).filter(it => !S.decisions[it.c.id]).length },
+    { g: 'Finance team' }, { r: 'invoices', t: 'Invoice check', ic: 'receipt', alias: ['invoice'], ct: () => S.invoices.filter(i => !['disputed', 'approved', 'blind'].includes(i.status)).length },
+    { g: 'Everyone' }, { r: 'repository', t: 'Repository', ic: 'archive', alias: ['contract'] }, { r: 'ask', t: 'Ask', ic: 'chat' },
     { g: 'Why Afterink' }, { r: 'why', t: 'Why after signature', ic: 'pen' }, { r: 'stakeholders', t: 'Who it serves', ic: 'users' }, { r: 'problem', t: 'The problem', ic: 'alert' },
     { r: 'metrics', t: 'Measuring success', ic: 'target' }
   ];

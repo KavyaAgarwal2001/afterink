@@ -401,6 +401,47 @@ h3{font-weight:700;font-size:11px;letter-spacing:.14em;color:var(--teal)}
 [data-theme="light"] .glowpill{color:var(--ink)}
 [data-theme="light"] .glowpill::after{background:#FBF7FC}
 @keyframes rotateBorder{to{transform:rotate(360deg)}}
+/* Team badges, AI / code / person tags, and the Start page */
+.team{display:flex;gap:12px;align-items:flex-start;background:var(--teal-soft);border:1px solid var(--line);border-radius:12px;padding:10px 14px;margin:0 0 14px;max-width:84ch}
+.team b{font-weight:600}
+.team p{margin:2px 0 0;font-size:13px;color:var(--muted)}
+.team-ic{display:grid;place-items:center;width:36px;height:36px;border-radius:10px;background:var(--accent-soft);color:var(--accent);flex:none}
+.team-ic .ic{width:20px;height:20px}
+.team-who{font-size:12.5px;color:var(--muted)}
+.tag{display:inline-flex;align-items:center;gap:5px;font:500 12px/1.3 var(--f-ui);padding:3px 9px 3px 7px;border-radius:999px;white-space:nowrap;border:1px solid transparent;cursor:help}
+.tag .ic{width:13px;height:13px}
+.tag-ai{background:var(--accent-soft);color:var(--accent);border-color:color-mix(in srgb,var(--accent) 30%,transparent)}
+.tag-code{background:var(--teal-soft);color:var(--teal);border-color:color-mix(in srgb,var(--teal) 30%,transparent)}
+.tag-you{background:var(--warn-soft);color:var(--warn);border-color:color-mix(in srgb,var(--warn) 30%,transparent)}
+.tags{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 12px}
+.cardhead>span{display:inline-flex;gap:6px;flex-wrap:wrap}
+.filebar .tag{margin-right:4px}
+.fnote .tag{margin-right:4px}
+.leaks{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px;margin:14px 0 8px}
+.leak{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:18px 18px 14px;display:flex;flex-direction:column;min-width:0}
+.leak-h{display:flex;gap:12px;align-items:flex-start;margin-bottom:6px}
+.leak-ic{display:grid;place-items:center;width:40px;height:40px;border-radius:12px;background:var(--crit-soft);color:var(--crit);flex:none}
+.leak-ic .ic{width:22px;height:22px}
+.leak-n{font:700 11px var(--f-ui);letter-spacing:.14em;text-transform:uppercase;color:var(--crit)}
+.leak h3{font:500 17px/1.3 var(--f-ui);letter-spacing:-.005em;text-transform:none;color:var(--ink);margin:2px 0 0}
+.leak p{margin:0 0 4px;font-size:14px}
+.leak-k{font:700 11px var(--f-ui)!important;letter-spacing:.12em;text-transform:uppercase;color:var(--teal);margin:12px 0 4px!important}
+.leak-cost{color:var(--ink)}
+.leak-cost b{color:var(--crit)}
+.leak-steps{list-style:none;padding:0;margin:0 0 6px;display:grid;gap:7px}
+.leak-steps li{display:flex;flex-wrap:wrap;gap:4px 6px;align-items:center;font-size:13.5px}
+.leak-steps li>span:last-child{flex:1 1 100%}
+.lk-team{font:600 12px var(--f-ui);color:var(--ink)}
+.leak .bar{margin-top:auto;padding-top:10px}
+.teams{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:12px;margin:12px 0}
+.teamcard{display:flex;flex-direction:column;gap:6px;text-align:left;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px;font:inherit;color:var(--ink);cursor:pointer}
+.teamcard:hover{border-color:var(--accent)}
+.teamcard>span:last-child{font-size:13px;color:var(--muted)}
+.legend{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px;margin:12px 0 18px}
+.legend>div{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px}
+.legend p{margin:8px 0 0;font-size:13.5px}
+main>.glowpill{color:var(--ink)}
+main>.glowpill::after{background:var(--bg)}
 /* Icons in the menu and the top-bar buttons */
 .ic{width:18px;height:18px;flex:none;fill:none;stroke:currentColor;stroke-width:1.75;stroke-linecap:round;stroke-linejoin:round}
 .nl .ic{opacity:.8}
@@ -415,7 +456,7 @@ h3{font-weight:700;font-size:11px;letter-spacing:.14em;color:var(--teal)}
 <div class="announce" id="announce"><div class="announce-in"><p><b>Live AI prototype.</b> Every term the AI reads is checked by code before anyone relies on it.</p><button class="lnk" data-act="tour-start">Take the two-minute tour &#8594;</button><button class="announce-x" data-act="announce-x" aria-label="Hide this message">&#215;</button></div></div>
 <header class="band">
   <div class="band-in">
-    <div class="brand"><b>Afterink</b><span>Signed contracts, turned into dates and prices people act on</span></div>
+    <div class="brand"><b>Afterink</b><span>Catch the deadlines and overcharges hidden in your signed contracts</span></div>
     <div class="topr"><span>Demo date <span class="mono" id="demo-date"></span></span><span class="chip mute" id="ai-chip">Claude: checking</span><button class="btn sm ghost" data-act="theme-toggle" id="theme-btn" aria-pressed="false">Light mode</button><button class="btn sm light" data-act="tour-start" id="tour-btn">Guided tour</button><button class="btn sm ghost" data-act="reset-ask" id="reset-btn">Reset demo</button></div>
     <div class="confirm" id="reset-confirm" role="dialog" aria-label="Reset demo" hidden><p>Restore the demo to its starting state? Anything you filed, decided or disputed is cleared.</p><div class="bar"><button class="btn sm pri" data-act="reset" id="reset-yes">Reset</button><button class="btn sm" data-act="reset-cancel">Cancel</button></div></div>
   </div>
@@ -434,16 +475,17 @@ h3{font-weight:700;font-size:11px;letter-spacing:.14em;color:var(--teal)}
 <div class="intro-back" id="intro" hidden>
   <div class="intro" role="dialog" aria-modal="true" aria-labelledby="intro-h">
     <p class="desk">Working prototype</p>
-    <h2 id="intro-h">Afterink in about two minutes</h2>
-    <p>Afterink reads every signed contract, turns its dates and prices into checks, and puts each one in front of the person who has to act. This demo runs on Kestrel Mobility, a sample company. Everything you click works and the AI steps run live. Nothing is ever sent to a supplier: no email, no payment, no notice.</p>
+    <h2 id="intro-h">Afterink in two minutes</h2>
+    <p>Companies sign thousands of supplier contracts, then file them away. Deadlines pass, invoices overcharge and refunds go unclaimed. Afterink reads every signed contract with AI, turns it into dates and prices, and puts each one in front of the team that has to act.</p>
+    <p>This is a working demo on a sample company, Kestrel Mobility. Everything you click works, the AI runs live, and nothing is ever sent to a supplier.</p>
     <ol class="verbs">
-      <li><b>File</b>Legal Ops files a signed document. AI reads it live and code checks every quote.</li>
-      <li><b>Check</b>Accounts Payable checks invoices against the agreed rates.</li>
-      <li><b>Decide</b>Procurement decides each renewal before its notice date.</li>
-      <li><b>Measure</b>Success is dates decided in time, not alerts sent.</li>
+      <li><b>Legal team</b>Files each signed contract. AI reads it, code checks it.</li>
+      <li><b>Buying team</b>Decides every renewal before the last day to say no.</li>
+      <li><b>Finance team</b>Pays only what the contract allows.</li>
+      <li><b>Everyone</b>Asks questions and gets the clause as proof.</li>
     </ol>
     <div class="bar"><button class="btn pri" data-act="intro-tour" id="intro-start">Start the guided tour</button><button class="btn" data-act="intro-skip" id="intro-skip">Explore on my own</button></div>
-    <p class="sub">You can restart the tour any time from the top bar.</p>
+    <p class="sub">The Start page shows the three ways money leaks, with a step-by-step walkthrough for each.</p>
   </div>
 </div>
 
