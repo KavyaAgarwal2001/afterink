@@ -1106,8 +1106,7 @@
   };
   const icon = name => ICON[name] ? `<svg class="ic" viewBox="0 0 24 24" aria-hidden="true" focusable="false">${ICON[name]}</svg>` : '';
   const NAV = [
-    { r: 'start', t: 'Overview', ic: 'home' },
-    { g: 'Why Afterink' }, { r: 'problem', t: 'The problem', ic: 'alert' }, { r: 'why', t: 'Why after signature', ic: 'pen' }, { r: 'stakeholders', t: 'Who it serves', ic: 'users' },
+    { g: 'Why Afterink' }, { r: 'start', t: 'Overview', ic: 'home' }, { r: 'problem', t: 'The problem', ic: 'alert' }, { r: 'why', t: 'Why after signature', ic: 'pen' }, { r: 'stakeholders', t: 'Who it serves', ic: 'users' },
     { r: 'metrics', t: 'Measuring success', ic: 'target' },
     { g: 'The product' },
     { r: 'inbox', t: 'Inbox', team: 'Legal team', ic: 'inbox', alias: ['review'], ct: () => S.inbox.filter(d => d.status === 'new').length },

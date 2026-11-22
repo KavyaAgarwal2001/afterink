@@ -11,7 +11,7 @@ A working prototype of an AI contract repository for the stage after signature. 
 - **Finance team, Invoice check**: every invoice line compared with the signed price. AI reads a pasted invoice; code does all the arithmetic; a person disputes or approves.
 - **Everyone, Repository and Ask**: search and filter every contract; ask in plain words and get an answer that cites the clause.
 
-The Overview page shows three ways money leaks out of signed contracts, each with a "Show me, step by step" walkthrough. The "Why Afterink" pages (The problem, Why after signature, Who it serves, Measuring success) are the business case.
+The Overview page shows three ways money leaks out of signed contracts, each with a "Show me, step by step" walkthrough. The menu has two groups. "Why Afterink" holds the Overview and the business case (The problem, Why after signature, Who it serves, Measuring success); "The product" holds the desks, each labelled with its team.
 
 ## The one rule behind the design
 
