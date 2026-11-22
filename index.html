@@ -24,7 +24,7 @@
   --band:#0B1821; --on-band:#F5F6F6; --on-band-muted:#B4CDD0; --band-chip:#073439;
   --glow:radial-gradient(120% 160% at 50% -60%, rgba(13,94,104,.85) 0%, rgba(13,94,104,0) 62%);
   --mark:#EAD6EE; --mark-ink:#0B1821;
-  --scrim:rgba(11,24,33,.55); --shadow:rgba(11,24,33,.18);
+  --scrim:rgba(11,24,33,.35); --shadow:rgba(11,24,33,.18);
   --good:#17693F; --good-soft:#DAF0E3; --warn:#8A5200; --warn-soft:#FBEACB; --crit:#AD231C; --crit-soft:#FBDFDC;
   --f-ui:"Hanken Grotesk",system-ui,-apple-system,"Segoe UI",sans-serif;
   --f-doc:"Source Serif 4",Georgia,"Times New Roman",serif;
@@ -49,7 +49,7 @@ body{background:var(--bg);color:var(--ink);font:15px/1.55 var(--f-ui)}
 .nl:hover{background:var(--sunk)}
 .nl.on{background:var(--accent-soft);color:var(--accent);font-weight:600}
 .nn{font:500 12px/1 var(--f-mono);border:1px solid currentColor;border-radius:50%;width:19px;height:19px;display:inline-grid;place-items:center;flex:none}
-.ct{margin-left:auto;font:500 12px var(--f-mono);background:var(--ink);color:var(--bg);border-radius:9px;padding:1px 7px}
+.ct{margin-left:auto;font:500 12px var(--f-mono);background:#FFFFFF;color:var(--ink);border-radius:9px;padding:1px 7px}
 main{min-width:0}
 @media (max-width:860px){
   .app{grid-template-columns:minmax(0,1fr);gap:18px}
@@ -87,7 +87,7 @@ a{color:var(--accent)}
 .band .brand span{color:var(--on-band-muted)}
 .band .topr{color:var(--on-band-muted)}
 .band .chip.mute{background:var(--band-chip);color:var(--on-band)}
-.btn.light{background:var(--on-band);color:var(--band);border-color:var(--on-band);font-weight:600}
+.btn.light{background:var(--accent);color:#FFFFFF;border-color:var(--accent);font-weight:600}
 .btn.ghost{background:transparent;color:var(--on-band);border-color:var(--on-band-muted)}
 .btn.ghost:hover{border-color:var(--on-band)}
 .tour{position:fixed;z-index:22;right:calc(env(safe-area-inset-right,0px) + 20px);bottom:calc(env(safe-area-inset-bottom,0px) + 20px);width:min(380px,calc(100vw - 32px));background:var(--surface);color:var(--ink);border:1px solid var(--line);border-top:4px solid var(--accent);border-radius:12px;box-shadow:0 16px 40px var(--shadow);padding:16px 18px}
@@ -137,7 +137,7 @@ details.more{margin:10px 0 0} details.more>summary{cursor:pointer;color:var(--ac
 .chain .k{font:500 12px var(--f-mono);letter-spacing:.06em;text-transform:uppercase;opacity:.75}
 .stack{display:flex;height:36px;border-radius:6px;overflow:hidden;margin:12px 0 6px;max-width:84ch;font:500 13px var(--f-mono)}
 .stack>span{display:grid;place-items:center;min-width:0;white-space:nowrap;overflow:hidden;color:var(--bg)}
-.stack>span:nth-child(1){background:var(--accent);color:var(--accent-ink)} .stack>span:nth-child(2){background:var(--ink)} .stack>span:nth-child(3){background:var(--muted)}
+.stack>span:nth-child(1){background:var(--accent);color:var(--accent-ink)} .stack>span:nth-child(2){background:#5C63B2;color:#FFFFFF} .stack>span:nth-child(3){background:var(--muted)}
 .frac{display:inline-grid;text-align:center;font:500 15px/1.4 var(--f-ui);background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:14px 18px;margin:8px 0 14px;max-width:100%}
 .frac>span:first-child{border-bottom:2px solid var(--ink);padding-bottom:6px}
 .frac>span:last-child{padding-top:6px;color:var(--muted)}
@@ -172,7 +172,7 @@ details.more{margin:10px 0 0} details.more>summary{cursor:pointer;color:var(--ac
 .bar .inp{flex:1 1 240px;width:auto}
 .seg{display:flex;flex-wrap:wrap;gap:4px}
 .segb{font:500 14px var(--f-ui);padding:6px 10px;border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:6px;cursor:pointer}
-.segb.on{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.segb.on{background:#E1E3FE;color:var(--ink);border-color:#6E76D5;font-weight:600}
 .rec{font-size:12px;opacity:.75;margin-left:4px}
 
 .scroll{overflow-x:auto;border:1px solid var(--line);border-radius:8px;background:var(--surface);margin:12px 0}
@@ -267,7 +267,7 @@ mark.hl.on{outline:2px solid var(--accent);outline-offset:1px}
 .finding p{margin:2px 0 0}
 .logl{list-style:none;padding:0;display:grid;gap:6px;font-size:15px}
 .filebar{position:sticky;bottom:calc(env(safe-area-inset-bottom,0px) + 8px);background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:10px 12px;margin:0}
-.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(env(safe-area-inset-bottom,0px) + 20px);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:8px;font-size:15px;width:max-content;max-width:min(92vw,580px);z-index:20}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(env(safe-area-inset-bottom,0px) + 20px);background:#FFFFFF;color:var(--ink);border:1px solid #D9DCF7;padding:10px 16px;border-radius:8px;font-size:15px;width:max-content;max-width:min(92vw,580px);z-index:20}
 .quads{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:22px;margin:16px 0}
 .quad{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--line);border:1px solid var(--line);border-radius:8px;overflow:hidden}
 .quad>div{background:var(--surface);padding:12px 14px;min-height:120px;min-width:0}
@@ -318,7 +318,7 @@ h3{font-weight:700;font-size:12px;letter-spacing:.14em;color:var(--teal)}
 .btn.light{background:var(--accent);color:var(--accent-ink);border-color:var(--accent);font-weight:500}
 .btn.light:hover{background:var(--accent-hover);border-color:var(--accent-hover)}
 .btn.ghost{border-color:rgba(245,246,246,.35)}
-.segb.on{background:var(--teal-deep);border-color:var(--teal-deep);color:var(--on-band)}
+.segb.on{background:#E1E3FE;border-color:#6E76D5;color:var(--ink)}
 .chipb{border-radius:999px}
 .chipb:hover{border-color:var(--accent);color:var(--accent)}
 .card,.tile,.steps li,.fnode,.scroll,.finding{border-radius:12px}
@@ -333,13 +333,13 @@ h3{font-weight:700;font-size:12px;letter-spacing:.14em;color:var(--teal)}
 .side{background:var(--glow),var(--band);border-radius:16px;padding:16px 10px 18px;gap:3px}
 .side .ng{color:var(--teal-mid);font-weight:700;letter-spacing:.14em;padding:0 8px}
 .side .nl{color:var(--on-band);border-radius:8px}
-.side .nl:hover{background:var(--teal-deep)}
+.side .nl:hover{background:#E9EAFE}
 .side .nl.on{background:var(--accent);color:var(--accent-ink);font-weight:500}
-.side .ct{background:var(--on-band);color:var(--band)}
+.side .ct{background:#FFFFFF;color:var(--ink)}
 .side .nl.on .ct{background:var(--accent-ink);color:var(--accent)}
 @media (max-width:860px){
   .side{padding:8px;border-radius:12px}
-  .side .nl{border:0;background:var(--teal-deep)}
+  .side .nl{border:0;background:#FFFFFF}
   .side .nl.on{background:var(--accent)}
 }
 /* Start page hero: the brand moment, dark with the teal glow and a purple call to action. */
@@ -347,7 +347,7 @@ h3{font-weight:700;font-size:12px;letter-spacing:.14em;color:var(--teal)}
 .hero b{font:400 22px/1.25 var(--f-ui);letter-spacing:-.01em}
 .hero p{color:var(--on-band-muted)}
 .intro{border-top-color:var(--accent);border-radius:16px}
-.toast{background:var(--band);color:var(--on-band)}
+
 
 /* ---------- Light frame (earlier pass; the Sirion light block below takes precedence) ----------
    Each mode only changes tokens and a few shared pieces, so every screen, diagram and state follows it. */
@@ -361,7 +361,7 @@ h3{font-weight:700;font-size:12px;letter-spacing:.14em;color:var(--teal)}
 [data-theme="light"] .side .nl{color:var(--ink)}
 [data-theme="light"] .side .nl:hover{background:var(--sunk)}
 [data-theme="light"] .side .nl.on{background:var(--accent-soft);color:var(--accent);font-weight:600}
-[data-theme="light"] .side .ct{background:var(--ink);color:#fff}
+[data-theme="light"] .side .ct{background:#FFFFFF;color:var(--ink)}
 [data-theme="light"] .side .nl.on .ct{background:var(--accent);color:#fff}
 [data-theme="light"] .hero{background:linear-gradient(120deg,#F4EAF6,#E7EFF0);border:1px solid #E5D3EA;color:var(--ink)}
 [data-theme="light"] .hero p{color:var(--muted)}
@@ -377,7 +377,7 @@ h3{font-weight:700;font-size:12px;letter-spacing:.14em;color:var(--teal)}
    gradient from its announcement bar is the header (see the bold palette below). */
 .glowpill{position:relative;display:table;padding:4px 14px;border-radius:50px;font-size:13.5px;line-height:1.4;isolation:isolate;overflow:hidden;margin:0 0 10px;color:var(--on-band)}
 .glowpill::before{content:"";position:absolute;inset:-160% -40%;background:conic-gradient(from 25deg,#818BFB 0deg,#FFFFFF 90deg,#818BFB 180deg,#FFFFFF 270deg,#818BFB 360deg);animation:rotateBorder 3s linear infinite;z-index:-2}
-.glowpill::after{content:"";position:absolute;inset:1.5px;border-radius:50px;background:#0C1C26;z-index:-1}
+.glowpill::after{display:none}
 [data-theme="light"] .glowpill{color:var(--ink)}
 [data-theme="light"] .glowpill::after{background:#FBF7FC}
 @keyframes rotateBorder{to{transform:rotate(360deg)}}
@@ -511,13 +511,6 @@ h3{color:var(--label)}
    Sirion's signature colours in large areas: the blue-to-purple gradient is the header, the menu is
    a column of deep Sirion teal, and cards are Sirion teal on the navy page, so areas clearly stand
    apart. Purple stays for buttons and the selected menu item. */
-.band{background:linear-gradient(90deg,#0F3FBB -60%,#7F208F 100%)!important;border-bottom:0!important;color:#FFFFFF}
-.band .brand b{color:#FFFFFF}
-.band .brand span{color:rgba(255,255,255,.82)}
-.band .topr{color:rgba(255,255,255,.82)}
-.band .chip,.band .chip.good,.band .chip.mute{background:rgba(255,255,255,.16)!important;color:#FFFFFF!important;border:1px solid rgba(255,255,255,.32)!important}
-.band .btn.ghost{color:#FFFFFF!important;border-color:rgba(255,255,255,.45)!important;background:transparent!important}
-.band .btn.light{background:#FFFFFF!important;color:#5B1F73!important;border-color:#FFFFFF!important;font-weight:600}
 .facts{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 6px;padding:0}
 .facts span{font-size:13.5px;padding:4px 11px;border-radius:999px;border:1px solid var(--line);color:var(--soft);background:var(--surface)}
 .leak-cost{font-size:15px!important;margin:10px 0 2px!important}
@@ -970,8 +963,8 @@ h1,h2{color:var(--ink)}
   </details>
 </template>
 
-<script src="data.js" charset="utf-8"></script>
-<script src="app.js" charset="utf-8"></script>
+<script src="data.js?v=2026-11-22" charset="utf-8"></script>
+<script src="app.js?v=2026-11-22" charset="utf-8"></script>
 
 </body>
 </html>
