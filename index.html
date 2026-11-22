@@ -9,19 +9,23 @@
 <body>
 <meta name="claude:viewport-fit-sides" content="cover">
 <title>Afterink Contract Repository</title>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&display=swap">
 <style>
 /* Layout: the assignment's five sections run down a left rail; one working pane on the right.
    Signed text is set like paper and marked with highlighter where a term was read from it. */
-/* Theme: white page, one strong blue for the top band, actions and highlights. */
+/* Theme: styled after the sirion.ai brand, since the brief comes from Sirion. Deep navy and teal for the
+   frame (top band, side menu, hero), purple for actions, light work surfaces for the product itself, the way
+   Sirion shows its product inside a dark site. Afterink keeps its own name; no Sirion logo or wording is used. */
 :root{
-  --bg:#FFFFFF; --surface:#FFFFFF; --sunk:#F2F6FD; --ink:#0B1B3F; --muted:#52617D; --line:#DCE4F1;
-  --accent:#1F4FD8; --accent-ink:#FFFFFF; --accent-soft:#E7EEFE;
-  --band:#1F4FD8; --on-band:#FFFFFF; --on-band-muted:#D3E0FF; --band-chip:#3D68E3;
-  --mark:#D4E2FF; --mark-ink:#0B1B3F;
-  --scrim:rgba(11,27,63,.45); --shadow:rgba(11,27,63,.18);
+  --bg:#F3F6F7; --surface:#FFFFFF; --sunk:#EDF3F4; --ink:#0B1821; --muted:#4D565D; --line:#D7E1E3;
+  --accent:#92429F; --accent-hover:#773A86; --accent-ink:#FFFFFF; --accent-soft:#F4EAF6;
+  --teal:#0D5E68; --teal-mid:#5D939A; --teal-soft:#E7EFF0; --teal-deep:#05272C; --teal-chip:#073439;
+  --band:#0B1821; --on-band:#F5F6F6; --on-band-muted:#B4CDD0; --band-chip:#073439;
+  --glow:radial-gradient(120% 160% at 50% -60%, rgba(13,94,104,.85) 0%, rgba(13,94,104,0) 62%);
+  --mark:#EAD6EE; --mark-ink:#0B1821;
+  --scrim:rgba(11,24,33,.55); --shadow:rgba(11,24,33,.18);
   --good:#17693F; --good-soft:#DAF0E3; --warn:#8A5200; --warn-soft:#FBEACB; --crit:#AD231C; --crit-soft:#FBDFDC;
-  --f-ui:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-ui:"Hanken Grotesk",system-ui,-apple-system,"Segoe UI",sans-serif;
   --f-doc:"Source Serif 4",Georgia,"Times New Roman",serif;
   --f-mono:"IBM Plex Mono",ui-monospace,Consolas,monospace;
   color-scheme:light;
@@ -298,6 +302,54 @@ mark.hl.on{outline:2px solid var(--accent);outline-offset:1px}
 .findbox p{margin:0 0 6px}
 .findbox .sugg{margin:0 0 8px}
 .fchip{display:inline-block;font:500 12px var(--f-mono);background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:3px 8px}
+/* ---------- Sirion-style frame: rules below restyle the shared pieces above ---------- */
+body{font-weight:400;-webkit-font-smoothing:antialiased}
+h1{font-weight:300;font-size:36px;line-height:1.12;letter-spacing:-.022em}
+h2{font-weight:400;font-size:23px;letter-spacing:-.012em}
+h3{font-weight:700;font-size:11px;letter-spacing:.14em;color:var(--teal)}
+.lede{font:300 19px/1.5 var(--f-ui);letter-spacing:-.005em}
+.desk{color:var(--teal);font-weight:700;letter-spacing:.14em}
+.band{background:var(--glow),var(--band);border-bottom:1px solid rgba(180,205,208,.14)}
+.band .brand b{font:500 24px/1 var(--f-ui);letter-spacing:-.02em}
+.band .chip.mute{background:var(--band-chip);color:var(--on-band);border:1px solid rgba(93,147,154,.45)}
+.band .chip.good{background:var(--band-chip);color:#A7E8C6;border:1px solid rgba(93,147,154,.45)}
+.btn,.inp,.segb{border-radius:8px}
+.btn{font-weight:500}
+.btn:hover{border-color:var(--teal-mid)}
+.btn.pri:hover{background:var(--accent-hover);border-color:var(--accent-hover)}
+.btn.light{background:var(--accent);color:var(--accent-ink);border-color:var(--accent);font-weight:500}
+.btn.light:hover{background:var(--accent-hover);border-color:var(--accent-hover)}
+.btn.ghost{border-color:rgba(245,246,246,.35)}
+.segb.on{background:var(--teal-deep);border-color:var(--teal-deep);color:var(--on-band)}
+.chipb{border-radius:999px}
+.chipb:hover{border-color:var(--accent);color:var(--accent)}
+.card,.tile,.steps li,.fnode,.scroll,.finding{border-radius:12px}
+.tn{font:300 30px/1.2 var(--f-ui);font-variant-numeric:tabular-nums;letter-spacing:-.02em}
+.tile.star{background:var(--glow),var(--band);color:var(--on-band);border-color:var(--band)}
+.tile.star .tl,.tile.star .ts{color:var(--on-band-muted)}
+.callout{background:var(--teal-soft)}
+.aistrip{background:var(--teal-soft);border-color:#CFDFE1;color:var(--muted)}
+.aistrip b{color:var(--teal)}
+.doc{border-radius:6px;box-shadow:0 1px 2px rgba(11,24,33,.05)}
+/* Side menu: a dark panel with pill links, like the site's navigation. */
+.side{background:var(--glow),var(--band);border-radius:16px;padding:16px 10px 18px;gap:3px}
+.side .ng{color:var(--teal-mid);font-weight:700;letter-spacing:.14em;padding:0 8px}
+.side .nl{color:var(--on-band);border-radius:8px}
+.side .nl:hover{background:var(--teal-deep)}
+.side .nl.on{background:var(--accent);color:var(--accent-ink);font-weight:500}
+.side .ct{background:var(--on-band);color:var(--band)}
+.side .nl.on .ct{background:var(--accent-ink);color:var(--accent)}
+@media (max-width:860px){
+  .side{padding:8px;border-radius:12px}
+  .side .nl{border:0;background:var(--teal-deep)}
+  .side .nl.on{background:var(--accent)}
+}
+/* Start page hero: the brand moment, dark with the teal glow and a purple call to action. */
+.hero{background:var(--glow),var(--band);border:1px solid var(--teal-chip);border-radius:16px;padding:22px 24px;color:var(--on-band)}
+.hero b{font:400 22px/1.25 var(--f-ui);letter-spacing:-.01em}
+.hero p{color:var(--on-band-muted)}
+.intro{border-top-color:var(--accent);border-radius:16px}
+.toast{background:var(--band);color:var(--on-band)}
 </style>
 
 <header class="band">
