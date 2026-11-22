@@ -42,23 +42,29 @@ async function rateLimit(env, ip) {
   const { success } = await env.RL.limit({ key: ip || 'unknown' });
   if (!success) throw new Reject('rate_limited', 'Too many requests from this address. Try again in a minute.', 429);
 }
+/* The daily budget reserves a call's largest possible output before the call is made, then settles
+   to the real figure afterwards. A call that fails or is cut off keeps its whole reservation. The
+   store is eventually consistent, so the count is approximate, but every error leans towards
+   stopping early rather than overspending. */
 const dayKey = () => 'budget:' + new Date().toISOString().slice(0, 10);
-async function checkBudget(env) {
-  if (!env.BUDGET) return;
-  const cap = Number(env.DAILY_OUTPUT_TOKENS || 400000);
-  const used = Number(await env.BUDGET.get(dayKey())) || 0;
-  if (used >= cap) throw new Reject('budget', "Today's AI budget for this demo is used up. Saved results are shown instead.", 429);
-}
-async function addBudget(env, tokens) {
-  if (!env.BUDGET || !tokens) return;
-  const k = dayKey(); const used = Number(await env.BUDGET.get(k)) || 0;
+async function reserveBudget(env, tokens) {
+  if (!env.BUDGET) return 0;
+  const cap = Number(env.DAILY_OUTPUT_TOKENS || 400000), k = dayKey();
+  const used = Number(await env.BUDGET.get(k)) || 0;
+  if (used >= cap) throw new Reject('budget', "Today's AI budget for this demo is used up.", 429);
   await env.BUDGET.put(k, String(used + tokens), { expirationTtl: 3 * 86400 });
+  return tokens;
+}
+async function settleBudget(env, reserved, actual) {
+  if (!env.BUDGET || !reserved || actual == null) return;
+  const k = dayKey(), used = Number(await env.BUDGET.get(k)) || 0;
+  await env.BUDGET.put(k, String(Math.max(0, used - reserved + actual)), { expirationTtl: 3 * 86400 });
 }
 
 /* ---------- the model call, streamed back as SSE ---------- */
 const errOf = e => (e instanceof Reject ? [e.code, e.message, e.status] : ['upstream_error', 'Something went wrong. Try again.', 500]);
 
-function stream(pv, spec, env, ctx, headers) {
+function stream(pv, spec, env, ctx, headers, reserved) {
   const enc = new TextEncoder();
   const { readable, writable } = new TransformStream();
   const writer = writable.getWriter();
@@ -70,7 +76,7 @@ function stream(pv, spec, env, ctx, headers) {
       let r;
       while (!(r = await gen.next()).done) await send({ t: r.value });
       const fin = r.value || {};
-      await addBudget(env, fin.out);
+      await settleBudget(env, reserved, fin.out || 0);
       if (fin.stop === 'refusal') await send({ error: 'refused', message: 'The model declined this input.' });
       else await send({ done: true, ms: Date.now() - t0, in: fin.in || 0, out: fin.out || 0, provider: pv.name, model: fin.model || pv.model, modelName: modelName(fin.model || pv.model), truncated: fin.stop === 'truncated' });
     } catch (e) {
@@ -92,17 +98,23 @@ export default {
     if (!m) return json({ error: 'not_found', message: 'Unknown route.' }, 404, c.headers);
     const task = m[1], pv = provider(env);
     if (task === 'health') return json({ ok: !!pv, provider: pv ? pv.name : null, model: pv ? pv.model : null, modelName: pv ? modelName(pv.model) : null, tasks: Object.keys(TASKS), budget: !!env.BUDGET, rateLimit: !!env.RL }, 200, c.headers);
-    if (!TASKS[task]) return json({ error: 'not_found', message: 'Unknown task.' }, 404, c.headers);
+    /* Own properties only: a name such as "constructor" must not reach a function that turns the
+       request body into a prompt. */
+    if (!Object.hasOwn(TASKS, task)) return json({ error: 'not_found', message: 'Unknown task.' }, 404, c.headers);
     if (request.method !== 'POST') return json({ error: 'bad_request', message: 'POST a JSON body.' }, 405, c.headers);
+    /* Browsers always send Origin on a cross-site POST. A POST without one comes from a script, not the page. */
+    if (!origin && !String(env.ALLOWED_ORIGINS || '').split(',').map(x => x.trim()).includes('*')) return json({ error: 'forbidden', message: 'Requests must come from the Afterink page.' }, 403, c.headers);
     if (!pv) return json({ error: 'auth', message: 'The AI server has no key configured.' }, 503, c.headers);
     try {
       await rateLimit(env, request.headers.get('cf-connecting-ip') || '');
-      await checkBudget(env);
       const raw = await request.text();
       if (raw.length > 400000) throw new Reject('prompt_too_large', 'That text is too long. Paste a shorter document.', 413);
       let body; try { body = JSON.parse(raw || '{}'); } catch (e) { throw new Reject('bad_request', 'The request body is not JSON.'); }
       const spec = TASKS[task](body || {});
-      return stream(pv, spec, env, ctx, c.headers);
+      if (!spec || typeof spec.system !== 'string' || typeof spec.user !== 'string') throw new Reject('bad_request', 'Unknown task.', 404);
+      spec.max_tokens = Math.min(Math.max(1, Number(spec.max_tokens) || 1000), 12000);
+      const reserved = await reserveBudget(env, spec.max_tokens);
+      return stream(pv, spec, env, ctx, c.headers, reserved);
     } catch (e) {
       const [code, message, status] = errOf(e);
       return json({ error: code, message }, status, c.headers);

@@ -79,14 +79,19 @@
      Below: the server's address, the health check, the streaming call, and a log of every call,
      so a viewer can see that the AI is live and what each call cost in time and tokens. */
   const AI_URL_DEFAULT = 'https://afterink-proxy.REPLACE-ME.workers.dev';
-  const AI_URL = (() => {
-    try { const q = new URLSearchParams(location.search).get('ai'); if (q) localStorage.setItem('afterink.ai.url', q); const s = localStorage.getItem('afterink.ai.url'); if (s) return s.replace(/\/$/, ''); } catch (e) { /* storage unavailable */ }
-    return /^(localhost|127\.0\.0\.1)$/.test(location.hostname) ? 'http://127.0.0.1:8787' : AI_URL_DEFAULT;
+  /* ?ai=http://127.0.0.1:8787 points this one page load at a local server, for testing. Only local
+     addresses are accepted and nothing is stored, so a shared link cannot send a viewer's text elsewhere. */
+  const AI_URL_OVERRIDE = (() => {
+    try { localStorage.removeItem('afterink.ai.url'); } catch (e) { /* storage unavailable; an older build stored an override here */ }
+    try { const q = new URLSearchParams(location.search).get('ai'); return q && /^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?\/?$/.test(q) ? q.replace(/\/$/, '') : ''; } catch (e) { return ''; }
   })();
+  const AI_URL = AI_URL_OVERRIDE || (/^(localhost|127\.0\.0\.1)$/.test(location.hostname) ? 'http://127.0.0.1:8787' : AI_URL_DEFAULT);
+  const AI_UNSET = /REPLACE-ME/.test(AI_URL);
   const AI = { state: 'checking', provider: null, model: null, modelName: null, calls: [], why: '' };
-  const AI_COPY = { rate_limited: 'The AI server is busy or its free quota is used up for now. Try again in a minute.', budget: "Today's AI budget for this demo is used up, so saved results are shown.", auth: 'The AI server has no working key, so saved results are shown.', offline: 'The AI server is not reachable, so saved results are shown.', refused: 'The model declined this input.', invalid_json: 'The model replied in a format this page could not read. Try again.', upstream_error: 'The connection to the AI server dropped. Try again.', prompt_too_large: 'That text is too long. Paste a shorter document.', too_short: 'Paste the full text first.', empty: 'The model returned nothing. Try again.', bad_request: 'The AI server rejected the request.' };
+  const AI_COPY = { rate_limited: 'The AI server is busy or its free quota is used up for now. Try again in a minute.', budget: "Today's AI budget for this demo is used up.", auth: 'The AI server has no working key.', offline: 'The AI server is not reachable.', refused: 'The model declined this input.', invalid_json: 'The model replied in a format this page could not read. Try again.', upstream_error: 'The connection to the AI server dropped. Try again.', prompt_too_large: 'That text is too long. Paste a shorter document.', too_short: 'Paste the full text first.', empty: 'The model returned nothing. Try again.', bad_request: 'The AI server rejected the request.' };
   const live = () => AI.state === 'live';
-  function aiErr(e) { const code = e && e.code; if (code === 'auth' || code === 'offline') { AI.state = 'off'; AI.why = code; chrome(); } return AI_COPY[code] || AI_COPY.upstream_error; }
+  function aiErr(e) { const code = e && e.code; if (code === 'auth' || code === 'offline' || code === 'budget') { AI.state = 'off'; AI.why = code; chrome(); strip(); } return AI_COPY[code] || AI_COPY.upstream_error; }
+  const WHY_OFF = { auth: 'it has no working key', budget: "today's AI budget for this demo is used up", unset: 'no AI server is set up for this copy yet', offline: 'it cannot be reached' };
   const TASK_LABEL = { extract: 'Read a document', ask: 'Answer a question', brief: 'Write a renewal brief', dispute: 'Redraft a dispute note', invoice: 'Read an invoice', filter: 'Turn a question into a filter', amend: 'Explain an amendment' };
   const fmtMs = ms => (ms / 1000).toFixed(1) + ' s';
   async function aiCall(task, body, onText) {
@@ -96,25 +101,30 @@
     try { res = await fetch(AI_URL + '/v1/' + task, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) }); }
     catch (e) { entry.status = 'failed'; entry.err = 'offline'; strip(); throw { code: 'offline' }; }
     if (!res.ok) { let j = {}; try { j = await res.json(); } catch (e) { /* no body */ } entry.status = 'failed'; entry.err = j.error || (res.status === 429 ? 'rate_limited' : 'upstream_error'); strip(); throw { code: entry.err, message: j.message }; }
-    const reader = res.body.getReader(), dec = new TextDecoder(); let buf = '', text = '', meta = null, err = null;
-    for (;;) {
-      const { value, done } = await reader.read(); if (done) break;
-      buf += dec.decode(value, { stream: true }); let i;
-      while ((i = buf.indexOf('\n\n')) >= 0) {
-        const chunk = buf.slice(0, i); buf = buf.slice(i + 2);
-        for (const line of chunk.split('\n')) {
-          if (!line.startsWith('data: ')) continue;
-          let j; try { j = JSON.parse(line.slice(6)); } catch (e) { continue; }
-          if (j.t) { text += j.t; if (onText) onText(text, j.t); }
-          else if (j.error) err = j;
-          else if (j.done) meta = j;
+    const fail = (code, message) => { entry.status = 'failed'; entry.err = code; entry.ms = Math.round(performance.now() - t0); strip(); return { code, message }; };
+    let buf = '', text = '', meta = null, err = null;
+    try {
+      const reader = res.body.getReader(), dec = new TextDecoder();
+      for (;;) {
+        const { value, done } = await reader.read(); if (done) break;
+        buf += dec.decode(value, { stream: true }); let i;
+        while ((i = buf.indexOf('\n\n')) >= 0) {
+          const chunk = buf.slice(0, i); buf = buf.slice(i + 2);
+          for (const line of chunk.split('\n')) {
+            if (!line.startsWith('data: ')) continue;
+            let j; try { j = JSON.parse(line.slice(6)); } catch (e) { continue; }
+            if (j.t) { text += j.t; if (onText) onText(text, j.t); }
+            else if (j.error) err = j;
+            else if (j.done) meta = j;
+          }
         }
       }
-    }
-    if (err) { entry.status = 'failed'; entry.err = err.error; strip(); throw { code: err.error, message: err.message }; }
-    entry.status = 'done'; entry.ms = Math.round(performance.now() - t0); entry.in = meta ? meta.in : null; entry.out = meta ? meta.out : null; entry.model = meta ? (meta.modelName || meta.model) : AI.modelName; entry.truncated = !!(meta && meta.truncated); strip();
-    if (!text.trim()) throw { code: 'empty' };
-    return { text, meta: meta || {}, entry };
+    } catch (e) { throw fail('upstream_error'); }
+    if (err) throw fail(err.error, err.message);
+    if (!meta) throw fail('upstream_error');            /* the stream ended without its closing event: the answer may be cut off */
+    if (!text.trim()) throw fail('empty');
+    entry.status = 'done'; entry.ms = Math.round(performance.now() - t0); entry.in = meta.in; entry.out = meta.out; entry.model = meta.modelName || meta.model; entry.truncated = !!meta.truncated; strip();
+    return { text, meta, entry };
   }
   function parseJSONText(t) {
     const s = String(t).trim().replace(/^```(?:json)?\s*/i, '').replace(/```\s*$/, '');
@@ -218,8 +228,8 @@
     if (!j || typeof j !== 'object') return false;
     const str = (x, d) => (x == null ? (d || '') : String(x));
     if (j.type === 'meta') { ex.docType = j.docType === 'amendment' ? 'amendment' : 'contract'; ex.supplier = str(j.supplier, 'Unknown supplier'); ex.title = str(j.title, 'Untitled document'); ex.type = str(j.kind || j.type, 'Contract'); ex.category = CATEGORIES.includes(j.category) ? j.category : 'Other'; ex.summary = str(j.summary); ex.meta = true; return true; }
-    if (j.type === 'field') { const fd = FIELDS.find(f => f.k === j.k); if (!fd) return false; const v = coerce(fd.type, j.value); ex.fields[fd.k] = { value: v, quote: j.quote ? String(j.quote) : null, confidence: ['high', 'medium', 'low'].includes(j.confidence) ? j.confidence : (v == null ? 'low' : 'medium'), note: j.note ? String(j.note) : '' }; return true; }
-    if (j.type === 'rate') { if (j.item && !isNaN(Number(j.rate))) ex.rates.push({ item: String(j.item), unit: str(j.unit, 'unit'), rate: Number(j.rate), quote: j.quote ? String(j.quote) : null }); return true; }
+    if (j.type === 'field') { const fd = FIELDS.find(f => f.k === j.k); if (!fd || (ex.touched && ex.touched[fd.k])) return false; const v = coerce(fd.type, j.value); ex.fields[fd.k] = { value: v, quote: j.quote ? String(j.quote) : null, confidence: ['high', 'medium', 'low'].includes(j.confidence) ? j.confidence : (v == null ? 'low' : 'medium'), note: j.note ? String(j.note) : '' }; return true; }
+    if (j.type === 'rate') { const rate = coerce('money', j.rate); if (j.item && rate != null) ex.rates.push({ item: String(j.item), unit: str(j.unit, 'unit'), rate, quote: j.quote ? String(j.quote) : null }); return true; }
     if (j.type === 'risk') { if (j.text && ex.risks.length < 6) ex.risks.push(String(j.text)); return true; }
     if (j.type === 'amends') { ex.amends = normEx({ docType: 'amendment', amends: j }).amends; return true; }
     if (j.type === 'end') { for (const fd of FIELDS) delete ex.fields[fd.k].pending; ex.done = true; return true; }
@@ -241,9 +251,9 @@
       const v = coerce(fd.type, x.value);
       ex.fields[fd.k] = { value: v, quote: x.quote ? String(x.quote) : null, confidence: ['high', 'medium', 'low'].includes(x.confidence) ? x.confidence : (v == null ? 'low' : 'medium'), note: x.note ? String(x.note) : '' };
     }
-    if (Array.isArray(r.rates)) ex.rates = r.rates.filter(x => x && x.item && !isNaN(Number(x.rate))).map(x => ({ item: String(x.item), unit: str(x.unit, 'unit'), rate: Number(x.rate), quote: x.quote ? String(x.quote) : null }));
+    if (Array.isArray(r.rates)) ex.rates = r.rates.filter(x => x && x.item && coerce('money', x.rate) != null).map(x => ({ item: String(x.item), unit: str(x.unit, 'unit'), rate: coerce('money', x.rate), quote: x.quote ? String(x.quote) : null }));
     if (ex.docType === 'amendment' && r.amends && Array.isArray(r.amends.changes)) {
-      ex.amends = { parentSupplier: str(r.amends.parentSupplier, ex.supplier), effectiveFrom: coerce('date', r.amends.effectiveFrom), changes: r.amends.changes.map(ch => ch && ch.kind === 'rate' ? { kind: 'rate', item: str(ch.item), newRate: Number(ch.newRate), quote: ch.quote ? String(ch.quote) : null } : (ch && FIELDS.some(f => f.k === ch.field) ? { kind: 'field', field: ch.field, label: str(ch.label, ch.field), newValue: coerce(FIELDS.find(f => f.k === ch.field).type, ch.newValue), quote: ch.quote ? String(ch.quote) : null } : null)).filter(Boolean) };
+      ex.amends = { parentSupplier: str(r.amends.parentSupplier, ex.supplier), effectiveFrom: coerce('date', r.amends.effectiveFrom), changes: r.amends.changes.map(ch => ch && ch.kind === 'rate' ? { kind: 'rate', item: str(ch.item), newRate: coerce('money', ch.newRate), quote: ch.quote ? String(ch.quote) : null } : (ch && FIELDS.some(f => f.k === ch.field) ? { kind: 'field', field: ch.field, label: str(ch.label, ch.field), newValue: coerce(FIELDS.find(f => f.k === ch.field).type, ch.newValue), quote: ch.quote ? String(ch.quote) : null } : null)).filter(Boolean) };
     }
     return ex;
   }
@@ -287,6 +297,15 @@
       const misses = Object.entries(c.perf || {}).filter(e => e[1] < c.slaCredit.target);
       return `A credit of ${c.slaCredit.creditPct}% of that month's service fee, which is ${money(r2(c.rates[0].rate * c.slaCredit.creditPct / 100))} a month, applied on the next invoice [${c.id}${secOf(c, 'sla')}].\n- The trigger is a joint monthly audit score below ${c.slaCredit.target}% [${c.id}${secOf(c, 'sla')}]\n- The audit log shows ${misses.length} recent ${misses.length === 1 ? 'miss' : 'misses'}: ${misses.map(e => `${e[0]} at ${e[1]}%`).join(', ')}\n- The contract does not say the credit lapses if unclaimed, but the supplier has to apply it. Check each invoice after a miss.`;
     }
+    if (id === 'q4') {
+      /* Comparing a cap written in words with 12 months of fees is a reading task, so without the AI
+         the page lists each cap as filed and leaves the comparison to the reader. */
+      const cs = S.contracts.filter(c => c.f.liabilityCap), none = S.contracts.filter(c => !c.f.liabilityCap);
+      let t = 'Without the AI this page cannot judge which caps fall below 12 months of fees, so here is each verified contract\'s liability cap as filed.\n';
+      cs.forEach(c => { t += `- ${c.supplier}: ${c.f.liabilityCap} [${c.id}${secOf(c, 'liabilityCap')}]\n`; });
+      if (none.length) t += `No liability cap is recorded for ${none.map(c => c.supplier).join(', ')}.`;
+      return t;
+    }
     return null;
   }
   function situationFor(it) {
@@ -296,24 +315,29 @@
   /* Find in plain words: the model turns the question into a filter, code runs it. The result is
      exact, and would still be exact over 4,000 contracts, because the model never sees them. */
   function contractFacts(c) {
-    const it = renewalItem(c), nb = noticeBy(c);
+    const nb = noticeBy(c);
+    /* daysLeft is what the filter prompt says it is: days to the notice date when there is one (negative
+       once it has passed), otherwise days to the end of the term. */
     return { supplier: c.supplier, owner: c.owner, category: c.category, type: c.type, autoRenew: !!c.f.autoRenew, termEnd: c.f.termEnd || null, noticeBy: nb,
-      daysLeft: it ? it.left : nb ? daysBetween(DEMO_TODAY, nb) : c.f.termEnd ? daysBetween(DEMO_TODAY, c.f.termEnd) : null,
+      daysLeft: nb ? daysBetween(DEMO_TODAY, nb) : c.f.termEnd ? daysBetween(DEMO_TODAY, c.f.termEnd) : null,
       noticeDays: c.f.noticeDays, renewalMonths: c.f.renewalMonths, upliftPct: c.f.upliftPct == null ? null : c.f.upliftPct, upliftText: c.f.upliftText || null, annualValue: c.f.annualValue, paymentDays: c.f.paymentDays,
       liabilityCap: c.f.liabilityCap || null, sla: c.f.sla || null, law: c.f.law || null, noticeMethod: c.f.noticeMethod || null, amendments: c.amendments.length, decided: !!S.decisions[c.id] };
   }
   function passes(c, F) {
     const facts = contractFacts(c);
-    const asBool = x => x === true || x === 'true';
+    /* A value that is not clearly yes or no fails the test rather than counting as no. */
+    const asBool = x => (x === true || /^(true|yes)$/i.test(String(x))) ? true : (x === false || /^(false|no)$/i.test(String(x))) ? false : null;
     const test = f => {
+      if (!Object.prototype.hasOwnProperty.call(facts, f.field)) return false;
       const v = facts[f.field], x = f.value, isNull = v == null || v === '';
+      const bad = typeof v === 'boolean' && x != null && asBool(x) === null;
       const same = () => typeof v === 'string' ? v.toLowerCase() === String(x).toLowerCase() : typeof v === 'boolean' ? v === asBool(x) : Number(v) === Number(x);
       switch (f.op) {
         case 'isnull': return isNull;
         case 'notnull': return !isNull;
         case 'contains': return !isNull && String(v).toLowerCase().includes(String(x == null ? '' : x).toLowerCase());
-        case 'eq': return !isNull && same();
-        case 'ne': return isNull ? x != null : !same();
+        case 'eq': return x == null ? isNull : !bad && !isNull && same();
+        case 'ne': return x == null ? !isNull : !bad && (isNull || !same());
         case 'lt': return !isNull && Number(v) < Number(x);
         case 'lte': return !isNull && Number(v) <= Number(x);
         case 'gt': return !isNull && Number(v) > Number(x);
@@ -356,12 +380,14 @@
   /* ---------- small view parts ---------- */
   const chip = (tone, text) => `<span class="chip ${tone}">${esc(text)}</span>`;
   const deskTag = d => `<p class="desk">${esc(DESK[d])} desk</p>`;
-  const aiNote = () => live() ? '' : `<p class="note">${AI.state === 'checking' ? 'Checking whether the AI server is reachable.' : `The AI server is not reachable right now (${AI.why === 'auth' ? 'no working key' : 'no connection'}), so this page replays saved AI results. The checks, dates and sums still run live in your browser.`}</p>`;
+  const aiNote = () => live() ? '' : `<p class="note">${AI.state === 'checking' ? 'Checking whether the AI server is reachable.' : `The live AI is off because ${WHY_OFF[AI.why] || WHY_OFF.offline}, so this page replays saved AI results. The checks, dates and sums still run live in your browser.`}</p>`;
+  const PASTE_NOTE = 'Text you paste here is sent to the AI model through this demo\'s server, which runs on a free key whose provider may keep what it receives. Paste only public or invented documents.';
+  const readingNow = () => !!(T.review && T.review.streaming);
   function hero() {
     if (!live()) return '';
     const next = S.inbox.find(d => d.status === 'new');
     return next
-      ? `<div class="hero"><div><b>Watch the AI read a signed document</b><p>${esc(next.filename)} is signed but not filed. Each term appears with the sentence it came from, and code checks every quote before a person decides anything.</p></div><button class="btn pri" data-act="read-doc" data-id="${next.id}">Read it with AI now</button></div>`
+      ? `<div class="hero"><div><b>Watch the AI read a signed document</b><p>${esc(next.filename)} is signed but not filed. Each term appears with the sentence it came from, and code checks every quote before a person decides anything.</p></div><button class="btn pri" data-act="read-doc" data-id="${next.id}" ${readingNow() ? 'disabled' : ''}>Read it with AI now</button></div>`
       : `<div class="hero"><div><b>Every inbox document is filed</b><p>Paste a contract of your own and watch the AI read it, or ask the repository a question in plain words.</p></div><button class="btn pri" data-act="go" data-r="inbox">Read a contract of your own</button></div>`;
   }
   function fmtVal(fd, v) { if (v == null) return '<span class="muted">Not stated</span>'; if (fd.type === 'date') return fmtDate(v); if (fd.type === 'bool') return v ? 'Yes' : 'No'; if (fd.type === 'money') return money(v); return esc(v); }
@@ -435,7 +461,7 @@
     inbox() {
       const rows = S.inbox.map(d => `<li class="docrow">
         <div><b class="mono">${esc(d.filename)}</b><p>${esc(d.found)}. Likely owner: ${esc(d.owner)}.</p></div>
-        <div class="docact">${d.status === 'filed' ? chip('good', 'Filed as ' + d.filedAs) + ` <button class="btn sm" data-act="open-contract" data-id="${d.filedAs}">Open</button>` : (T.busy === 'read:' + d.id ? '<span class="thinking">Reading the document…</span>' : `<button class="btn pri" data-act="read-doc" data-id="${d.id}">${live() ? 'Read with AI' : 'Show saved reading'}</button>`)}</div>
+        <div class="docact">${d.status === 'filed' ? chip('good', 'Filed as ' + d.filedAs) + ` <button class="btn sm" data-act="open-contract" data-id="${d.filedAs}">Open</button>` : (T.busy === 'read:' + d.id ? '<span class="thinking">Reading the document…</span>' : `<button class="btn pri" data-act="read-doc" data-id="${d.id}" ${readingNow() ? 'disabled title="Another document is being read"' : ''}>${live() ? 'Read with AI' : 'Show saved reading'}</button>`)}</div>
       </li>`).join('');
       return `${deskTag('legal')}<h1>Inbox</h1>
       <p class="lede">Signed documents that exist somewhere in the company but are not in the repository. Until one is filed, nobody downstream can act on it.</p>
@@ -445,7 +471,8 @@
       <h2>Read a document of your own</h2>
       <p class="sub">Paste the text of any supplier contract, for example one from the Law Insider samples, or load the bundled sample. ${live() ? `${esc(AI.modelName || 'The AI')} reads it live, with no saved answer to fall back on, and you check the result.` : 'This needs the live AI server, which is not reachable right now.'}</p>
       <textarea id="paste-contract" class="inp ta" rows="7" placeholder="Paste contract text here" data-inp="pastedoc" ${live() ? '' : 'disabled'}>${esc(T.pasteText)}</textarea>
-      <div class="bar">${T.busy === 'read:paste' ? '<span class="thinking">Reading the document…</span>' : `<button class="btn" data-act="paste-sample" ${live() ? '' : 'disabled'}>Load a sample contract</button><button class="btn pri" data-act="read-paste" ${live() ? '' : 'disabled'}>Read pasted contract</button>`}</div>
+      ${live() ? `<p class="sub">${PASTE_NOTE}</p>` : ''}
+      <div class="bar">${T.busy === 'read:paste' ? '<span class="thinking">Reading the document…</span>' : `<button class="btn" data-act="paste-sample" ${live() ? '' : 'disabled'}>Load a sample contract</button><button class="btn pri" data-act="read-paste" ${live() && !readingNow() ? '' : 'disabled'}>Read pasted contract</button>`}</div>
       <div class="callout"><b>What the product does here, and what it leaves to a person.</b> AI extracts every term with the sentence it came from. Code checks that the sentence really appears in the document. Terms that set a deadline or a price are accepted without review only when the AI is confident, the quote matches word for word, and the extracted number or date appears inside that quote. Everything else waits for a person.</div>`;
     },
 
@@ -460,11 +487,12 @@
           ${!ex.amends && R.streaming ? '<p class="thinking">Reading the changes…</p>' : parent ? `<p>Matched to <button class="lnk" data-act="open-contract" data-id="${parent.id}">${parent.id} ${esc(parent.supplier)}, ${esc(parent.title)}</button>. Changes take effect ${fmtDate(ex.amends.effectiveFrom)}.</p>` : `<p class="warnp">No contract for "${esc(ex.amends ? ex.amends.parentSupplier : ex.supplier)}" is in the repository. File the base agreement first.</p>`}
           ${parent && ex.amends ? `<div class="scroll"><table class="tbl"><thead><tr><th>Term</th><th>On file now</th><th>After this amendment</th><th>Source</th><th>Checked</th></tr></thead><tbody>${ex.amends.changes.map((ch, i) => {
             let was, now, label;
-            if (ch.kind === 'rate') { const rt = matchRate(parent, ch.item); label = ch.item + ' rate'; was = rt ? money(rt.rate) : 'Not on rate card'; now = money(ch.newRate); }
+            if (ch.kind === 'rate') { const rt = matchRate(parent, ch.item); label = /\brate$/i.test(ch.item) ? ch.item : ch.item + ' rate'; was = rt ? money(rt.rate) : 'Not on rate card'; now = money(ch.newRate); }
             else { const fd = FIELDS.find(f => f.k === ch.field); label = ch.label || fd.label; was = parent.f[ch.field] == null ? 'No cap or not stated' : String(parent.f[ch.field]); now = String(ch.newValue); }
-            const qv = ch.quote && findSpan(R.text, ch.quote), vq = qv && valueInQuote('num', ch.kind === 'rate' ? ch.newRate : ch.newValue, ch.quote) === false;
+            const unread = unreadChange(ch);
+            const qv = ch.quote && findSpan(R.text, ch.quote), vq = qv && !unread && valueInQuote('num', ch.kind === 'rate' ? ch.newRate : ch.newValue, ch.quote) === false;
             const prior = ch.kind === 'rate' ? (matchRate(parent, ch.item) || {}).src : (/^Set by (.+?),/.exec(parent.notes[ch.field] || '') || [])[1];
-            return `<tr><td>${esc(label)}</td><td>${esc(was)}${prior ? `<span class="fnote">Already changed by ${esc(prior)}. The later signed document governs from its effective date. Check the two do not conflict.</span>` : ''}</td><td><b>${esc(now)}</b></td><td>${qv ? `<button class="lnk" data-act="hl" data-k="ch${i}">Show source</button>${vq ? ' ' + chip('warn', 'Value not in its quote') : ''}` : chip('warn', 'Quote not found')}</td><td><input type="checkbox" id="ok-ch${i}" data-chg="tick" data-k="ch${i}" ${R.ok['ch' + i] ? 'checked' : ''} aria-label="Checked against the document"></td></tr>`;
+            return `<tr><td>${esc(label)}</td><td>${esc(was)}${prior ? `<span class="fnote">Already changed by ${esc(prior)}. The later signed document governs from its effective date. Check the two do not conflict.</span>` : ''}</td><td><b>${unread ? 'Not read' : esc(now)}</b></td><td>${qv ? `<button class="lnk" data-act="hl" data-k="ch${i}">Show source</button>${vq ? ' ' + chip('warn', 'Value not in its quote') : ''}` : chip('warn', 'Quote not found')}</td><td>${unread ? chip('crit', 'Value not read') : `<input type="checkbox" id="ok-ch${i}" data-chg="tick" data-k="ch${i}" ${R.ok['ch' + i] ? 'checked' : ''} aria-label="Checked against the document">`}</td></tr>`;
           }).join('')}</tbody></table></div><p class="sub">A change to a price or a cap is always confirmed by a person, whatever the AI's confidence.</p>` : ''}
         </div>${explainCard(parent)}`;
       } else {
@@ -515,7 +543,7 @@
         ${c.risks && c.risks.length ? `<div class="card"><h3>Flagged when filed</h3><ul>${c.risks.map(r => `<li>${esc(r)}</li>`).join('')}</ul></div>` : ''}
         <div class="card"><h3>Linked work</h3><ul class="plain">
           ${it && it.left <= 150 ? `<li><button class="lnk" data-act="open-renewal" data-id="${c.id}">Renewal decision</button> ${renewChip(it)}</li>` : ''}
-          ${invs.map(i => `<li><button class="lnk" data-act="open-invoice" data-id="${i.id}">Invoice ${i.id}</button> ${invChip(i, checkInvoice(i))}</li>`).join('')}
+          ${invs.map(i => `<li><button class="lnk" data-act="open-invoice" data-id="${esc(i.id)}">Invoice ${esc(i.id)}</button> ${invChip(i, checkInvoice(i))}</li>`).join('')}
           ${(c.history || []).map(h => `<li>${fmtDate(h.date)}: ${esc(h.text)}</li>`).join('')}
           ${events.map(l => `<li>${esc(DESK[l.desk])}: ${esc(l.text)}</li>`).join('')}
           ${!(it && it.left <= 150) && !invs.length && !(c.history || []).length && !events.length ? '<li class="muted">Nothing open.</li>' : ''}</ul></div>
@@ -533,7 +561,7 @@
       <div class="bar"><input id="ask-q" class="inp" type="text" placeholder="For example: what notice do we owe Vaultline?" value="${esc(A ? A.q : '')}" aria-label="Your question"><button class="btn pri" data-act="ask" ${T.busy === 'ask' ? 'disabled' : ''}>Ask</button></div>
       <div class="sugg">${SUGGESTED.map(s => `<button class="chipb" data-act="ask-s" data-id="${s.id}">${esc(s.q)}</button>`).join('')}</div>
       ${A ? `<div class="card answer"><p class="aq">${esc(A.q)}</p><div id="ask-out">${A.text ? fmtAnswer(A.text) : '<span class="thinking">Thinking…</span>'}</div>
-        <p class="sub" id="ask-meta">${A.done ? (A.mode === 'live' ? `Written live by ${esc(A.model || AI.modelName || 'the AI')} from the clauses below${A.ms ? ' in ' + fmtMs(A.ms) : ''}.` : A.mode === 'saved' ? 'Built by this page from the structured terms, because the AI server is not reachable.' : esc(A.err || '')) : ''}</p></div>
+        <p class="sub" id="ask-meta">${A.done ? (A.mode === 'live' ? `Written live by ${esc(A.model || AI.modelName || 'the AI')} from the clauses below${A.ms ? ' in ' + fmtMs(A.ms) : ''}.` : A.mode === 'saved' ? `${A.err ? esc(A.err) + ' ' : ''}This answer was built by the page from the filed terms, without the AI.` : esc(A.err || '')) : ''}</p></div>
         ${A.src && A.src.length ? `<h2>Clauses the answer was drawn from</h2><ul class="srcl">${A.src.map(c => `<li><button class="cite" data-act="cite" data-id="${c.cid}" data-sec="${c.sec}">${c.cid} §${c.sec}</button> <span class="muted">${esc(c.supplier)}</span><p>${esc(c.text.length > 260 ? c.text.slice(0, 260) + '…' : c.text)}</p></li>`).join('')}</ul>` : ''}` : ''}`;
     },
 
@@ -607,6 +635,7 @@
       <h2>Check an invoice of your own</h2>
       <p class="sub">Paste invoice text. ${live() ? `${esc(AI.modelName || 'The AI')} reads the lines and maps each one to a rate card item. The comparison is then done by code.` : 'Reading a pasted invoice needs the live AI server, which is not reachable right now.'}</p>
       <textarea id="paste-inv" class="inp ta mono" rows="8" placeholder="Paste invoice text here" data-inp="pasteinv" ${live() ? '' : 'disabled'}>${esc(T.pasteInv)}</textarea>
+      ${live() ? `<p class="sub">${PASTE_NOTE}</p>` : ''}
       <div class="bar">${T.busy === 'inv' ? '<span class="thinking">Reading the invoice…</span>' : `<button class="btn" data-act="inv-sample" ${live() ? '' : 'disabled'}>Use a sample invoice</button><button class="btn pri" data-act="inv-parse" ${live() ? '' : 'disabled'}>Read and check</button>`}</div>`;
     },
 
@@ -654,7 +683,8 @@
   function valueInQuote(type, v, quote) {
     if (v == null || !quote) return null;
     const q = String(quote).replace(/\s+/g, ' ');
-    const has = s => new RegExp('(?<![\\d])' + s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '(?![\\d])', 'i').test(q);
+    /* Whole numbers only: 5 must not match inside 2.5, 250 inside 1,250, or 1 inside 31. */
+    const has = s => new RegExp('(?<![\\d.,])' + s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '(?![\\d]|[.,]\\d)', 'i').test(q);
     if (type === 'num' || type === 'money') {
       const n = Number(v); if (!isFinite(n) || n === 0) return null;
       const forms = [String(n), n.toLocaleString('en-US'), n.toFixed(2), n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })];
@@ -664,23 +694,26 @@
     if (type === 'date') {
       const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(v)); if (!m) return null;
       const y = m[1], mo = MONTHS[Number(m[2]) - 1], d = String(Number(m[3]));
-      return [`${d} ${mo} ${y}`, `${mo} ${d}, ${y}`, `${mo} ${d} ${y}`, `${d}(st|nd|rd|th) ${mo} ${y}`, String(v)].some(f => new RegExp(f, 'i').test(q));
+      return [`(?<!\\d)${d} ${mo} ${y}`, `${mo} ${d}, ${y}`, `${mo} ${d} ${y}`, `(?<!\\d)${d}(st|nd|rd|th) ${mo} ${y}`, String(v)].some(f => new RegExp(f, 'i').test(q));
     }
     return null;
   }
+  const unreadChange = ch => (ch.kind === 'rate' ? ch.newRate : ch.newValue) == null;
   function pending() {
     const R = T.review, ex = R.ex;
-    if (ex.docType === 'amendment') { if (!ex.amends || !findContract(ex.amends.parentSupplier)) return ['parent']; return ex.amends.changes.map((c, i) => 'ch' + i).filter(k => !R.ok[k]); }
+    if (ex.docType === 'amendment') { if (!ex.amends || !findContract(ex.amends.parentSupplier)) return ['parent']; return ex.amends.changes.map((c, i) => 'ch' + i).filter((k, i) => !R.ok[k] || unreadChange(ex.amends.changes[i])); }
     return FIELDS.filter(fd => fd.crit).map(fd => fd.k).concat(['rates']).filter(k => needsCheck(k) && !R.ok[k]);
   }
   function fileBar() {
     const R = T.review, p = pending(), am = R.ex.docType === 'amendment';
-    const auto = am ? 0 : FIELDS.filter(fd => fd.crit && !needsCheck(fd.k)).length;
+    /* Count only terms that have arrived: a term still being read has not been accepted. */
+    const auto = am ? 0 : FIELDS.filter(fd => fd.crit && !R.ex.fields[fd.k].pending && !needsCheck(fd.k)).length;
+    const unread = am && R.ex.amends && R.ex.amends.changes.some(unreadChange);
     return `<div class="bar filebar"><button class="btn pri" data-act="file" ${p.length || R.streaming ? 'disabled' : ''}>${am ? 'Apply amendment to the contract' : 'File in the repository'}</button>
-      <span class="sub">${R.streaming ? 'Still reading the document.' : p[0] === 'parent' ? 'The base agreement has to be filed first.' : p.length ? `${p.length} ${p.length === 1 ? 'term still needs' : 'terms still need'} your check.` : 'Ready to file.'}${am ? '' : ` ${auto} of ${FIELDS.filter(f => f.crit).length} deadline and price terms were accepted without review.`}</span></div>`;
+      <span class="sub">${R.streaming ? 'Still reading the document.' : p[0] === 'parent' ? 'The base agreement has to be filed first.' : unread ? 'A changed value could not be read. Go back to the inbox and read the document again.' : p.length ? `${p.length} ${p.length === 1 ? 'term still needs' : 'terms still need'} your check.` : 'Ready to file.'}${am || R.streaming ? '' : ` ${auto} of ${FIELDS.filter(f => f.crit).length} deadline and price terms were accepted without review.`}</span></div>`;
   }
   function inputFor(fd, f) {
-    const id = 'f-' + fd.k, at = `id="${id}" data-chg="field" data-k="${fd.k}" class="inp"`;
+    const id = 'f-' + fd.k, at = `id="${id}" data-chg="field" data-k="${fd.k}" class="inp"${f.pending ? ' disabled' : ''}`;
     if (fd.type === 'bool') return `<select ${at}><option value=""${f.value == null ? ' selected' : ''}>Not stated</option><option value="true"${f.value === true ? ' selected' : ''}>Yes</option><option value="false"${f.value === false ? ' selected' : ''}>No</option></select>`;
     if (fd.type === 'date') return `<input type="date" ${at} value="${esc(f.value || '')}">`;
     if (fd.type === 'num' || fd.type === 'money') return `<input type="number" step="any" ${at} value="${f.value == null ? '' : f.value}" placeholder="Not stated">`;
@@ -711,7 +744,7 @@
     const F = T.find;
     return `<div class="bar"><input id="find-q" class="inp" type="text" placeholder="Or ask in plain words, for example: which contracts renew in the next 90 days with an uncapped increase?" value="${esc(F ? F.q : '')}" aria-label="Find contracts in plain words" ${live() ? '' : 'disabled'}><button class="btn pri" data-act="find" ${!live() || (F && F.status === 'running') ? 'disabled' : ''}>Find with AI</button></div>
       ${!live() ? '<p class="sub">Finding by plain words needs the live AI server. The search box and filters above work without it.</p>' : ''}
-      ${F ? (F.status === 'running' ? '<p class="thinking">Turning the question into a filter…</p>' : F.status === 'failed' ? `<p class="sub">${esc(F.err)}</p>` : `<div class="findbox"><p>${esc(F.explanation)}</p><div class="sugg">${F.filters.map(f => `<span class="fchip">${esc(filterWords(f))}</span>`).join(' ')}${F.match === 'any' && F.filters.length > 1 ? '<span class="fchip">any of these</span>' : ''}</div>${F.unsupported ? `<p class="sub">Not covered by the filter: ${esc(F.unsupported)}</p>` : ''}<p class="sub">The AI wrote this filter from your words. Code ran it over every contract, so the list is exact. <button class="lnk" data-act="find-clear">Clear</button></p></div>`) : ''}`;
+      ${F ? (F.status === 'running' ? '<p class="thinking">Turning the question into a filter…</p>' : F.status === 'failed' ? `<p class="sub">${esc(F.err)}</p>` : !F.filters.length ? `<div class="findbox"><p>No filter could be built from these words, so the list below is not filtered.${F.unsupported ? ' ' + esc(F.unsupported) : ''} Try naming a term, such as a notice date, a price rise, an annual value or an owner.</p><p class="sub"><button class="lnk" data-act="find-clear">Clear</button></p></div>` : `<div class="findbox"><p>${esc(F.explanation)}</p><div class="sugg">${F.filters.map(f => `<span class="fchip">${esc(filterWords(f))}</span>`).join(' ')}${F.match === 'any' && F.filters.length > 1 ? '<span class="fchip">any of these</span>' : ''}</div>${F.unsupported ? `<p class="sub">Not covered by the filter: ${esc(F.unsupported)}</p>` : ''}<p class="sub">The AI wrote this filter from your words. Code ran it over every contract, so the list is exact. <button class="lnk" data-act="find-clear">Clear</button></p></div>`) : ''}`;
   }
   function repoRows() {
     const q = T.repoQ.trim().toLowerCase();
@@ -760,19 +793,24 @@
         ex.done = true;
         if (T.review && T.review.ex === ex) { T.review.streaming = false; T.review.read = r.entry; T.review.note = r.entry.truncated ? 'The reading was cut short by the length limit. Check the last terms with care.' : ''; render(); if (ex.docType === 'amendment') explainAmendment(); }
         return;
-      } catch (e) { note = aiErr(e); if (T.review && T.review.ex === ex) T.review = null; }
+      } catch (e) {
+        note = aiErr(e);
+        if (!(T.review && T.review.ex === ex)) { T.busy = null; toast(`The reading of ${doc.filename} failed. ${note}`); return; }   /* the viewer has moved on to something else */
+        T.review = null;
+        if (S.route !== 'review') { T.busy = null; render(); toast(`The reading of ${doc.filename} failed. ${note}`); return; }
+      }
     }
     let ex = null;
     if (doc.saved) { ex = clone(doc.saved); ex.source = 'saved'; }
     if (!ex) { T.busy = null; go('inbox'); toast(note || 'Reading a pasted document needs the live AI server, which is not reachable.'); return; }
-    startReview(doc, ex, note);
+    startReview(doc, ex, note ? note + ' Showing the saved reading instead.' : '');
   }
   async function explainAmendment() {
     const R = T.review; if (!R) return;
     const ex = R.ex; if (ex.docType !== 'amendment' || !ex.amends || !live()) return;
     const parent = findContract(ex.amends.parentSupplier); if (!parent) return;
     const changes = ex.amends.changes.map(ch => {
-      if (ch.kind === 'rate') { const rt = matchRate(parent, ch.item); return { label: ch.item + ' rate', was: rt ? money(rt.rate) : 'Not on rate card', now: money(ch.newRate), quote: ch.quote }; }
+      if (ch.kind === 'rate') { const rt = matchRate(parent, ch.item); return { label: /\brate$/i.test(ch.item) ? ch.item : ch.item + ' rate', was: rt ? money(rt.rate) : 'Not on rate card', now: money(ch.newRate), quote: ch.quote }; }
       const fd = FIELDS.find(f => f.k === ch.field); return { label: ch.label || fd.label, was: parent.f[ch.field] == null ? 'No cap or not stated' : String(parent.f[ch.field]), now: String(ch.newValue), quote: ch.quote };
     });
     R.explain = { text: '', status: 'running' }; render();
@@ -849,8 +887,8 @@
     find() { findInWords($('#find-q').value); },
     'find-clear'() { T.find = null; render(); },
     'ai-log'() { T.showLog = !T.showLog; strip(); },
-    'read-doc': d => readDoc(S.inbox.find(x => x.id === d.id), d.id),
-    'read-paste'() { const t = $('#paste-contract').value.trim(); if (t.length < 200) return toast('Paste the full text of a contract first.'); T.pasteText = t; readDoc({ id: null, filename: 'Pasted text', owner: 'Unassigned', text: t }, 'paste'); },
+    'read-doc'(d) { if (readingNow()) return toast('Another document is still being read. Wait for it to finish.'); readDoc(S.inbox.find(x => x.id === d.id), d.id); },
+    'read-paste'() { if (readingNow()) return toast('Another document is still being read. Wait for it to finish.'); const t = $('#paste-contract').value.trim(); if (t.length < 200) return toast('Paste the full text of a contract first.'); T.pasteText = t; readDoc({ id: null, filename: 'Pasted text', owner: 'Unassigned', text: t }, 'paste'); },
     hl(d) { T.hl = d.k; $$('mark.hl').forEach(m => m.classList.toggle('on', m.dataset.ks.split(' ').includes(d.k))); const m = $('mark.hl.on'); if (m) m.scrollIntoView({ block: 'center', behavior: 'smooth' }); },
     file: fileReview,
     'open-contract'(d) { S.sel.contract = d.id; T.citeText = null; save(); go('contract'); },
@@ -884,7 +922,7 @@
     async 'dispute-ai'(d) {
       const inv = S.invoices.find(i => i.id === d.id), r = checkInvoice(inv); T.busy = 'dispute:' + d.id; render();
       const facts = tplDispute(inv, r);
-      try { const out = await aiCall('dispute', { facts }, t => { const el = $('#dispute'); if (el) el.value = t; }); T.disputes[d.id] = out.text.trim(); }
+      try { const out = await aiCall('dispute', { facts }, t => { const el = $('#dispute'); if (el && el.dataset.id === d.id) el.value = t; }); T.disputes[d.id] = out.text.trim(); }
       catch (e) { toast(aiErr(e)); }
       T.busy = null; render();
     },
@@ -897,7 +935,7 @@
         const { data: j } = await aiJSON('invoice', { text, cards });
         const lines = (Array.isArray(j.lines) ? j.lines : []).filter(l => l && !isNaN(Number(l.amount))).map(l => ({ desc: String(l.desc || 'Line'), kind: l.kind === 'surcharge' ? 'surcharge' : 'rate', item: l.item ? String(l.item) : null, overtime: !!l.overtime, qty: Number(l.qty) || 1, unitPrice: Number(l.unitPrice) || Number(l.amount), pct: l.pct != null ? Number(l.pct) : null, amount: Number(l.amount), base: true }));
         if (!lines.length) throw { code: 'invalid_json' };
-        const id = String(j.invoiceNo || 'PASTED-' + (S.invoices.length + 1));
+        const id = String(j.invoiceNo || '').replace(/[^\w.\/ -]/g, '').trim().slice(0, 40) || 'PASTED-' + (S.invoices.length + 1);
         S.invoices = S.invoices.filter(i => i.id !== id);
         S.invoices.push({ id, supplier: String(j.supplier || 'Unknown supplier'), date: coerce('date', j.date) || DEMO_TODAY, period: String(j.period || ''), periodLabel: String(j.periodLabel || j.period || ''), termsDays: j.termsDays != null ? Number(j.termsDays) : null, total: Number(j.total) || r2(lines.reduce((s, l) => s + l.amount, 0)), lines, status: 'unchecked', parsed: true });
         T.pasteInv = ''; T.busy = null; S.sel.invoice = id; save(); go('invoice');
@@ -906,7 +944,7 @@
   };
   const CHG = {
     tick(d, el) { T.review.ok[d.k] = el.checked; const row = $('#fr-' + d.k) || el.closest('.frow'); if (row) row.classList.toggle('need', !el.checked); $('#file-bar').innerHTML = fileBar(); },
-    field(d, el) { const fd = FIELDS.find(f => f.k === d.k), f = T.review.ex.fields[d.k]; f.value = coerce(fd.type, el.value); if (needsCheck(d.k)) { T.review.ok[d.k] = true; const cb = $('#ok-' + d.k); if (cb) cb.checked = true; const row = $('#fr-' + d.k); if (row) row.classList.remove('need'); } $('#file-bar').innerHTML = fileBar(); }
+    field(d, el) { const fd = FIELDS.find(f => f.k === d.k), f = T.review.ex.fields[d.k]; (T.review.ex.touched = T.review.ex.touched || {})[d.k] = true; f.value = coerce(fd.type, el.value); if (needsCheck(d.k)) { T.review.ok[d.k] = true; const cb = $('#ok-' + d.k); if (cb) cb.checked = true; const row = $('#fr-' + d.k); if (row) row.classList.remove('need'); } $('#file-bar').innerHTML = fileBar(); }
   };
   /* ---------- guided tour and first-visit intro ---------- */
   const filed = id => (S.inbox.find(d => d.id === id) || {}).status === 'filed';
@@ -1008,7 +1046,7 @@
     const last = calls[0];
     const lastText = !last ? '' : ` Last call: ${esc(last.label.toLowerCase())}, ${last.status === 'running' ? 'running…' : last.status === 'failed' ? 'failed. ' + esc(AI_COPY[last.err] || last.err) : fmtMs(last.ms) + (last.in != null ? `, ${(last.in + last.out).toLocaleString('en-US')} tokens` : '') + '.'}`;
     const head = AI.state === 'live'
-      ? `<b>Live AI: ${esc(AI.modelName || AI.model || '')}</b>, through a small server that holds the key. The page sends data, the server holds the prompts, and the model never does the arithmetic. ${calls.length ? `${calls.length} call${calls.length === 1 ? '' : 's'} this session.` : 'No calls yet.'}`
+      ? `<b>Live AI: ${esc(AI.modelName || AI.model || '')}</b>, through a small server that holds the key${AI_URL_OVERRIDE ? ` (test server ${esc(AI_URL_OVERRIDE)})` : ''}. The page sends data, the server holds the prompts, and the model never does the arithmetic. ${calls.length ? `${calls.length} call${calls.length === 1 ? '' : 's'} this session.` : 'No calls yet.'}`
       : `<b>AI calls this session: ${calls.length}.</b>`;
     el.innerHTML = `<div class="aistrip-in"><span>${head}${lastText}</span>${calls.length ? `<button class="lnk" data-act="ai-log">${T.showLog ? 'Hide the log' : 'Show the log'}</button>` : ''}</div>
       ${T.showLog && calls.length ? `<div class="scroll ailog"><table class="tbl mini"><thead><tr><th>Call</th><th>Status</th><th class="num">Time</th><th class="num">Sent</th><th class="num">Tokens in</th><th class="num">Tokens out</th><th>Model</th></tr></thead><tbody>${calls.map(c => `<tr><td>${esc(c.label)}</td><td>${c.status === 'done' ? chip('good', c.truncated ? 'Done, cut short' : 'Done') : c.status === 'running' ? chip('info', 'Running') : chip('crit', 'Failed')}</td><td class="num">${c.ms ? fmtMs(c.ms) : '—'}</td><td class="num">${c.chars.toLocaleString('en-US')} chars</td><td class="num">${c.in != null ? c.in.toLocaleString('en-US') : '—'}</td><td class="num">${c.out != null ? c.out.toLocaleString('en-US') : '—'}</td><td>${esc(c.model || '')}</td></tr>`).join('')}</tbody></table></div>` : ''}`;
@@ -1017,16 +1055,23 @@
     const bar = $('#ai-bar');
     if (bar) {
       bar.hidden = AI.state !== 'off';
-      if (AI.state === 'off') bar.innerHTML = `<b>The live AI server is not reachable right now${AI.why === 'auth' ? ' (it has no working key)' : ''}.</b> This page is replaying saved AI results, prepared in advance from these same documents. The checks, dates and invoice sums still run live in your browser. When the server is back, reload the page.`;
+      if (AI.state === 'off') bar.innerHTML = `<b>The live AI is off: ${esc(WHY_OFF[AI.why] || WHY_OFF.offline)}.</b> This page is replaying saved AI results, prepared in advance from these same documents. The checks, dates and invoice sums still run live in your browser.${AI.why === 'unset' ? '' : ' Reload the page to try again later.'}`;
     }
     const chipEl = $('#ai-chip');
     if (chipEl) { chipEl.className = 'chip ' + (AI.state === 'live' ? 'good' : 'mute'); chipEl.textContent = AI.state === 'live' ? `AI: live, ${AI.modelName || AI.model}` : AI.state === 'off' ? 'AI: saved results' : 'AI: checking'; }
     $('#nav').innerHTML = NAV.map(n => n.g ? `<p class="ng">${n.n ? `<span class="nn">${n.n}</span>` : ''}${n.g}</p>` : `<a class="nl${S.route === n.r || (n.alias || []).includes(S.route) ? ' on' : ''}" href="#${n.r}">${n.n ? `<span class="nn">${n.n}</span>` : ''}<span>${n.t}</span>${n.ct && n.ct() ? `<span class="ct">${n.ct()}</span>` : ''}</a>`).join('');
   }
+  let lastRoute = null;
   function render() {
     if (!VIEWS[S.route]) S.route = 'start';
+    const same = S.route === lastRoute, ae = document.activeElement, main = $('#main');
+    const keep = same && ae && ae.id && main.contains(ae) && /^(INPUT|TEXTAREA)$/.test(ae.tagName) && ae.type !== 'checkbox' ? { id: ae.id, v: ae.value, s: ae.selectionStart, e: ae.selectionEnd } : null;
+    const docEl = $('#doc'), docTop = same && docEl ? docEl.scrollTop : null;
     chrome();
-    $('#main').innerHTML = VIEWS[S.route]();
+    main.innerHTML = VIEWS[S.route]();
+    lastRoute = S.route;
+    if (keep) { const el = document.getElementById(keep.id); if (el && !el.disabled) { if (el.value !== keep.v) el.value = keep.v; el.focus(); try { if (keep.s != null) el.setSelectionRange(keep.s, keep.e); } catch (e) { /* not a text input */ } } }
+    if (docTop != null) { const d2 = $('#doc'); if (d2) d2.scrollTop = docTop; }
     const lm = $('#live-metrics'); if (lm) lm.innerHTML = liveMetrics();
     tourPaint();
     save();
@@ -1036,16 +1081,18 @@
   if (h0 && VIEWS[h0]) S.route = h0;
   if ((S.route === 'review' && !T.review)) S.route = 'inbox';
   async function initAI() {
-    try {
-      const ctl = new AbortController(), tm = setTimeout(() => ctl.abort(), 8000);
-      const r = await fetch(AI_URL + '/v1/health', { signal: ctl.signal }); clearTimeout(tm);
-      const j = await r.json();
-      if (j && j.ok) { AI.state = 'live'; AI.provider = j.provider; AI.model = j.model; AI.modelName = j.modelName || j.model; }
-      else { AI.state = 'off'; AI.why = 'auth'; }
-    } catch (e) { AI.state = 'off'; AI.why = 'offline'; }
-    chrome(); strip();
-    const ae = document.activeElement;
-    if (!(ae && /INPUT|TEXTAREA/.test(ae.tagName))) render();
+    if (AI_UNSET) { AI.state = 'off'; AI.why = 'unset'; }
+    else {
+      try {
+        const ctl = new AbortController(), tm = setTimeout(() => ctl.abort(), 8000);
+        const r = await fetch(AI_URL + '/v1/health', { signal: ctl.signal }); clearTimeout(tm);
+        const j = await r.json();
+        if (j && j.ok) { AI.state = 'live'; AI.provider = j.provider; AI.model = j.model; AI.modelName = j.modelName || j.model; }
+        else { AI.state = 'off'; AI.why = 'auth'; }
+      } catch (e) { AI.state = 'off'; AI.why = 'offline'; }
+    }
+    strip();
+    render();   /* render keeps the focused input and its caret, so this is safe while someone types */
   }
   $('#demo-date').textContent = fmtDate(DEMO_TODAY);
   render();

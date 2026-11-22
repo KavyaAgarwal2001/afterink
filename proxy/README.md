@@ -7,7 +7,7 @@ A small Cloudflare Worker that holds an API key so the Afterink page on GitHub P
 - Seven named tasks, one route each: `extract`, `ask`, `brief`, `dispute`, `invoice`, `filter`, `amend`. The page sends data; the prompts live in `src/tasks.js`. There is no free-form route, so the key cannot be used as a general chatbot.
 - Streams every reply back as server-sent events, so the viewer watches the reading happen.
 - Works with either provider. **Gemini** (Google AI Studio) has a free tier. **Claude** (Anthropic) is paid. Set one key and the server uses that provider; set both and `PROVIDER` decides.
-- Caps: input size per task, 20 calls a minute per visitor, and an optional daily token budget. When a cap trips, the page falls back to its saved results and says so.
+- Caps: input size per task, 20 calls a minute per visitor, and an optional daily token budget. When the daily budget runs out the page switches to its saved results and says why; when the per-minute limit is hit, the viewer is told to try again in a minute.
 - The model never does arithmetic. Dates, price comparisons and the quote checks are done by the page's own code.
 
 ## Deploy in about ten minutes
@@ -34,7 +34,9 @@ Then:
 npx wrangler deploy
 ```
 
-Wrangler prints the server's address, something like `https://afterink-proxy.<your-account>.workers.dev`. Put that address in `AI_URL` near the top of `app.js` and push the page.
+Wrangler prints the server's address, something like `https://afterink-proxy.<your-account>.workers.dev`. Put that address in `AI_URL_DEFAULT` near the top of `app.js` and push the page. Until that is done, the published page says that no AI server is set up for it and replays saved results.
+
+To test the page against a local server, open it with `?ai=http://127.0.0.1:8787` added to the address. Only local addresses are accepted there, and nothing is remembered between visits.
 
 Check it is up: open `<address>/v1/health` in a browser. It should say `"ok": true` and name the provider and model.
 

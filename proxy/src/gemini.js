@@ -26,7 +26,8 @@ function mapError(e) {
   if (e instanceof ApiError || (e && typeof e.status === 'number')) {
     if (e.status === 429) return new Reject('rate_limited', "Gemini's free quota is used up for now. Try again in a minute, or later today.", 429);
     if (e.status === 503) return new Reject('upstream_error', 'Gemini is overloaded right now. Try again in a minute.', 503);
-    if (e.status === 401 || e.status === 403) return new Reject('auth', 'The AI server is not configured with a valid key.', 502);
+    /* Google answers a bad key with 400 INVALID_ARGUMENT, so look at the reason as well as the status. */
+    if (e.status === 401 || e.status === 403 || /API_KEY_INVALID|API key not valid/i.test(msg)) return new Reject('auth', 'The AI server is not configured with a valid key.', 502);
     if (e.status === 400) return new Reject('bad_request', 'The AI server rejected the request.', 502);
     return new Reject('upstream_error', `Gemini returned an error (${status}). Try again.`, 502);
   }
@@ -62,7 +63,8 @@ async function* once(ai, model, spec, env) {
     const u = (last && last.usageMetadata) || {};
     const fr = last && last.candidates && last.candidates[0] && last.candidates[0].finishReason;
     const stop = fr === 'MAX_TOKENS' ? 'truncated' : (fr === 'SAFETY' || fr === 'PROHIBITED_CONTENT' || fr === 'BLOCKLIST') ? 'refusal' : 'end';
-    return { model, in: u.promptTokenCount || 0, out: u.candidatesTokenCount || 0, stop };
+    /* Thinking tokens are billed as output, so they count towards the budget and the call log. */
+    return { model, in: u.promptTokenCount || 0, out: (u.candidatesTokenCount || 0) + (u.thoughtsTokenCount || 0), stop };
   } catch (e) {
     if (slow) throw new Slow(model, firstMs);
     throw e;

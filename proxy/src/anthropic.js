@@ -28,25 +28,35 @@ function params(spec, model) {
   return p;
 }
 
+/* Yields the text of one streamed reply. If the model declines part-way and the server-side fallback
+   takes over, the text already sent belongs to a different answer, so the call fails instead of
+   splicing two answers together. A decline before any text simply carries on with the fallback. */
+async function* pump(stream) {
+  let sent = false;
+  for await (const ev of stream) {
+    if (ev.type === 'content_block_start' && ev.content_block && ev.content_block.type === 'fallback' && sent) throw new Reject('refused', 'The model declined part-way through. Try again.', 502);
+    if (ev.type === 'content_block_delta' && ev.delta.type === 'text_delta') { sent = true; yield ev.delta.text; }
+  }
+}
+
 export async function* run(spec, env) {
   const model = env.ANTHROPIC_MODEL || DEFAULT_MODEL;
   const client = new Anthropic({ apiKey: env.ANTHROPIC_API_KEY, maxRetries: 1, timeout: 180000 });
   let p = params(spec, model), stream, final;
   try {
     stream = client.beta.messages.stream(p);
-    for await (const ev of stream) {
-      if (ev.type === 'content_block_delta' && ev.delta.type === 'text_delta') yield ev.delta.text;
-    }
+    yield* pump(stream);
     final = await stream.finalMessage();
   } catch (e) {
+    if (e instanceof Reject) throw e;
     /* If the API objected to the structured-output schema itself, try once as plain JSON text. */
     if (spec.schema && e instanceof Anthropic.BadRequestError && /schema|output_config|format/i.test(String(e.message))) {
       delete p.output_config.format;
       try {
         stream = client.beta.messages.stream(p);
-        for await (const ev of stream) { if (ev.type === 'content_block_delta' && ev.delta.type === 'text_delta') yield ev.delta.text; }
+        yield* pump(stream);
         final = await stream.finalMessage();
-      } catch (e2) { throw mapError(e2); }
+      } catch (e2) { throw e2 instanceof Reject ? e2 : mapError(e2); }
     } else throw mapError(e);
   }
   const u = final.usage || {};
