@@ -44,7 +44,8 @@ Check it is up: open `<address>/v1/health` in a browser. It should say `"ok": tr
 |---|---|---|
 | `ALLOWED_ORIGINS` | Which page addresses may call the server | the two GitHub Pages copies and localhost |
 | `PROVIDER` | `gemini` or `anthropic` when both keys are set | whichever key exists |
-| `GEMINI_MODELS` | Gemini models tried in order; the next one is tried when a quota runs out | `gemini-3.8-flash,gemini-3.5-flash-lite` |
+| `GEMINI_MODELS` | Gemini models tried in order; the next one is tried when a model is over quota, overloaded, not available to the key, or sends nothing for 20 seconds | `gemini-3.5-flash-lite,gemini-3.6-flash,gemini-3.8-flash` |
+| `GEMINI_THINKING` | How hard Gemini thinks before answering: `MINIMAL`, `LOW`, `MEDIUM` or `HIGH`. Higher is slower; `LOW` read the sample contract perfectly in about five seconds | `LOW` |
 | `ANTHROPIC_MODEL` | The Claude model | `claude-opus-5-5` |
 | `DAILY_OUTPUT_TOKENS` | Daily cap across all visitors, only enforced when the `BUDGET` store exists | 400,000 |
 
@@ -53,7 +54,7 @@ Check it is up: open `<address>/v1/health` in a browser. It should say `"ok": tr
 ## About the free Gemini tier
 
 - Free-tier keys are free and need no card, but Google states that content sent on the free tier may be used to improve its products. Every contract in this prototype is invented, so that is acceptable here. Do not paste a real contract into the page while the server runs on a free key.
-- The free tier has small daily request limits per project, and they change. Check the current numbers in Google AI Studio for your key. The default model list starts with a Flash model and falls back to Flash-Lite, which has a much larger free daily allowance.
+- The free tier has small daily request limits per project, and they change. Check the current numbers in Google AI Studio for your key. The default model list starts with Flash-Lite, which has a much larger free daily allowance and was the fastest and most dependable model in testing, and falls back to the Flash models.
 - When the day's quota is used up, every call returns `rate_limited`, and the page shows its saved results with a note saying so.
 
 ## Run it locally
@@ -62,6 +63,8 @@ Check it is up: open `<address>/v1/health` in a browser. It should say `"ok": tr
 cp .dev.vars.example .dev.vars   # then put your key in .dev.vars
 npm run dev                       # serves http://127.0.0.1:8787
 ```
+
+The local server reads `.dev.vars` only when it starts, so restart it after changing the key.
 
 Serve the page from the repository root on port 8765 (`python -m http.server 8765`) and it will use the local server automatically.
 

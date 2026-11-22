@@ -41,3 +41,16 @@ test('invoice and ask cap their inputs', () => {
   assert.ok(ask.user.includes('[C-1001 §3] (S) clause'));
   assert.ok(ask.system.includes('10 verified contracts. 3 signed documents'));
 });
+
+test('extract asks for the amendment changes clause by clause, right after the meta line', () => {
+  const spec = TASKS.extract({ text: 'x'.repeat(300), fields: [{ k: 'surchargeCapPct', label: 'Surcharge cap (%)', type: 'num' }] });
+  const i = spec.system.indexOf('"type":"amends"'), j = spec.system.indexOf('"type":"field"');
+  assert.ok(i > 0 && i < j, 'the amends line comes before the field lines');
+  assert.ok(spec.system.includes('clause by clause'));
+  assert.ok(spec.system.includes('field "surchargeCapPct"'));
+});
+
+test('ask tells the model how to cite the register', () => {
+  const spec = TASKS.ask({ question: 'q', register: 'r', clauses: [] });
+  assert.ok(spec.system.includes('cite the contract id alone, like [C-1001]'));
+});

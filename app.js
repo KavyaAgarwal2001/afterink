@@ -230,7 +230,7 @@
     if (type === 'date') return /^\d{4}-\d{2}-\d{2}$/.test(String(v)) ? String(v) : null;
     if (type === 'bool') return v === true || v === 'true' ? true : v === false || v === 'false' ? false : null;
     if (type === 'text') return String(v);
-    const n = Number(String(v).replace(/[, $]/g, '')); return isNaN(n) ? null : n;
+    const n = Number(String(v).replace(/[, $%]/g, '').replace(/^USD/i, '')); return isNaN(n) ? null : n;  /* models sometimes write "6%" or "USD 35.50" */
   }
   function normEx(r) {
     r = r && typeof r === 'object' ? r : {};

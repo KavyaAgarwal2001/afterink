@@ -27,15 +27,19 @@ export const TASKS = {
 Reply as NDJSON: one JSON object per line, no code fences, no text before or after. Lines in this order:
 
 1. {"type":"meta","docType":"contract" or "amendment","supplier","title","kind" (for example "SaaS order form"),"category" (one of: ${categories.join(', ')}),"summary" (at most two plain sentences)}
-2. One line per field, in the order listed below: {"type":"field","k","value","quote","confidence","note"}
+2. For an amendment only, next: {"type":"amends","parentSupplier","effectiveFrom":"YYYY-MM-DD","changes":[...]}. Build "changes" by going through the amendment clause by clause. Every clause that sets a new value for a term of the base agreement is one change, including a clause that replaces a whole clause of the agreement:
+   - a new or changed price for an item is {"kind":"rate","item","newRate" (number),"quote"}
+   - a new or changed cap, percentage, number of days, multiplier, date or other term that matches one of the field keys below is {"kind":"field","field": that key,"label","newValue","quote"}. For example a new cap on a surcharge is field "surchargeCapPct", a changed notice period is field "noticeDays".
+   Leave out clauses that only restate, confirm or say terms are unchanged. A new obligation that matches no field key goes in a risk line instead.
+3. One line per field, in the order listed below: {"type":"field","k","value","quote","confidence","note"}
    - "quote" is copied character for character from the document: one contiguous span of at most 300 characters. It is checked by exact match, so never paraphrase or join separate passages.
    - "confidence" is "high" only when the document states the value outright, "medium" when you had to interpret, "low" when unsure.
    - If the document does not state a field, set value and quote to null, confidence "low", and say in "note" what is missing.
    - upliftPct is the largest percentage price increase the supplier may apply at a renewal or anniversary. Use 0 if prices are fixed or change only by signed amendment. Use null if increases are allowed with no cap.
    - termEnd is the end date of the current term.
-3. One line per priced item: {"type":"rate","item","unit","rate" (number, USD),"quote"}
-4. Up to four lines {"type":"risk","text"}: terms a buyer should know (uncapped increases, missing protections, new obligations on the customer).
-5. For an amendment only: {"type":"amends","parentSupplier","effectiveFrom":"YYYY-MM-DD","changes":[ {"kind":"rate","item","newRate","quote"} or {"kind":"field","field": one of the field keys,"label","newValue","quote"} ]}. For an amendment, field lines may hold nulls.
+   For an amendment, field lines hold only what the amendment itself states, and may be null.
+4. One line per priced item: {"type":"rate","item","unit","rate" (number, USD),"quote"}
+5. Up to four lines {"type":"risk","text"}: terms a buyer should know (uncapped increases, missing protections, new obligations on the customer).
 6. Last line: {"type":"end"}
 
 Fields:
@@ -55,11 +59,11 @@ ${fieldLines}`,
 
 Rules:
 - Use only the REGISTER and CLAUSES given.
-- Cite every factual claim with the contract id and clause number in square brackets, exactly like [C-1001 §3]. Cite amendments like [C-1002 §A1].
+- Cite every factual claim with the contract id and clause number in square brackets, exactly like [C-1001 §3]. Cite amendments like [C-1002 §A1]. When a fact comes from the REGISTER rather than a clause, cite the contract id alone, like [C-1001]. Never cite anything else in brackets.
 - Take dates from the REGISTER ("notice by") instead of recalculating them. Never do arithmetic of your own.
 - If the material does not answer the question, say so plainly and say which document would.
 - Lead with the answer in one or two sentences, then a short list. Plain text only. Use "- " for list items and no other formatting.
-- The repository holds ${num(b.contracts) || 0} verified contracts. ${num(b.unfiled) || 0} signed documents are still unfiled and are not included, so say when that could change the answer.`,
+- The repository holds ${num(b.contracts) || 0} verified contracts. ${num(b.unfiled) || 0} signed documents are still unfiled and are not included. Mention them only when they could change this answer.`,
       user: `REGISTER\n${str(b.register, 20000)}\n\nCLAUSES\n${clauses.map(c => `[${c.cid} §${c.sec}] (${c.supplier}) ${c.text}`).join('\n\n')}\n\nQUESTION: ${q}`
     };
   },
