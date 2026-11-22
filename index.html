@@ -9,7 +9,7 @@
 <body>
 <meta name="claude:viewport-fit-sides" content="cover">
 <title>Afterink Contract Repository</title>
-<script>(function(){var t="light";try{if(localStorage.getItem("afterink.theme")==="night")t="night";}catch(e){}var q=new URLSearchParams(location.search).get("theme");if(q==="light"||q==="night")t=q;document.documentElement.dataset.theme=t;})();</script>
+<script>document.documentElement.dataset.theme="light";</script>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&display=swap">
 <style>
 /* Layout: the workspace and the case for it run down a left rail; one working pane on the right.
@@ -352,7 +352,7 @@ h3{font-weight:700;font-size:12px;letter-spacing:.14em;color:var(--teal)}
 .intro{border-top-color:var(--accent);border-radius:16px}
 .toast{background:var(--band);color:var(--on-band)}
 
-/* ---------- Two modes: Sirion Night (the default) and Sirion Light (the toggle in the top bar) ----------
+/* ---------- Light frame (earlier pass; the Sirion light block below takes precedence) ----------
    Each mode only changes tokens and a few shared pieces, so every screen, diagram and state follows it. */
 
 /* Sirion Light: the same brand colours on an all-light, airy layout. */
@@ -374,16 +374,6 @@ h3{font-weight:700;font-size:12px;letter-spacing:.14em;color:var(--teal)}
 @media (max-width:860px){[data-theme="light"] .side .nl{background:var(--sunk)}[data-theme="light"] .side .nl.on{background:var(--accent);color:#fff}}
 
 /* Sirion Night: fully dark, like sirion.ai itself. Contracts stay on paper so they read like documents. */
-:root[data-theme="night"]{color-scheme:dark;--bg:#0B1821;--surface:#102430;--sunk:#0E1F29;--ink:#EEF2F3;--muted:#A3B2B8;--line:#20394A;
-  --accent:#B565C4;--accent-hover:#C77BD6;--accent-ink:#FFFFFF;--accent-soft:#2B1F36;--teal:#7FB9C1;--teal-soft:#0F2E33;--teal-mid:#5D939A;
-  --band:#07121A;--band-chip:#0F2E33;--mark:#4D2E59;--mark-ink:#FFFFFF;--shadow:rgba(0,0,0,.5);--scrim:rgba(0,0,0,.6);
-  --good:#86DDAE;--good-soft:#12352A;--warn:#F0C674;--warn-soft:#3A2E14;--crit:#FF948A;--crit-soft:#3E1C1C}
-[data-theme="night"] body{background:radial-gradient(90% 60% at 50% -10%,rgba(13,94,104,.35),transparent 70%),var(--bg)}
-[data-theme="night"] .doc{background:#F7F5EF;color:#1C1A17}
-[data-theme="night"] .doc mark.hl{background:#E9D2EE;color:#1C1A17}
-[data-theme="night"] .side{border:1px solid var(--line)}
-[data-theme="night"] .tbl tr.bad td{background:var(--crit-soft)}
-[data-theme="night"] .toast{background:var(--surface);color:var(--ink);border:1px solid var(--line)}
 
 
 /* Sirion's rotating periwinkle-and-white border, from the outlined pills on sirion.ai. The blue-to-purple
@@ -510,18 +500,6 @@ h3{color:var(--label)}
 .dia,.quad{border-radius:14px}
 .d-box{fill:var(--sunk)}
 /* Night: the sirion.ai navy, with lighter navy-teal surfaces so cards are easy on the eyes */
-:root[data-theme="night"]{--bg:#0C1B24;--surface:#112832;--sunk:#0F232C;--line:rgba(180,205,208,.13);--hover:rgba(180,205,208,.06);
-  --ink:#EEF3F4;--soft:#BCCED2;--muted:#8EA6AC;--label:#7FB0B7;--accent:#92429F;--accent-hover:#A552B3;--accent-soft:rgba(146,66,159,.16);
-  --accent-text:#D3A3DC;--code-text:#9CCFD6;--you-text:#EBC57A;--band:#0A1820;--mark:rgba(211,163,220,.22);--mark-ink:#FFFFFF}
-[data-theme="night"] body{background:var(--bg)}
-[data-theme="night"] .band{background:var(--band);border-bottom:1px solid var(--line)}
-[data-theme="night"] .side{background:transparent;border-color:var(--line)}
-[data-theme="night"] .doc{background:#132E38;color:#E3ECEE}
-[data-theme="night"] .doc mark.hl{background:var(--mark);color:#FFFFFF}
-[data-theme="night"] .d-box{fill:#173541}
-[data-theme="night"] .quad>div{background:var(--surface)}
-[data-theme="night"] .tile.star{background:var(--surface);border-color:var(--accent)}
-[data-theme="night"] .tile.star .tl,[data-theme="night"] .tile.star .ts{color:var(--muted)}
 /* Light: white surfaces on a soft grey-teal page */
 :root[data-theme="light"]{--bg:#F4F7F8;--surface:#FFFFFF;--sunk:#EEF3F4;--line:#DFE7E9;--hover:#EEF3F4;
   --ink:#0B1821;--soft:#3D4A52;--muted:#5E6C73;--label:#2F6B73;--accent:#92429F;--accent-soft:#F4EAF6;
@@ -546,15 +524,6 @@ h3{color:var(--label)}
 .facts{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 6px;padding:0}
 .facts span{font-size:13.5px;padding:4px 11px;border-radius:999px;border:1px solid var(--line);color:var(--soft);background:var(--surface)}
 .leak-cost{font-size:15px!important;margin:10px 0 2px!important}
-:root[data-theme="night"]{--bg:#0E151A;--surface:#172128;--sunk:#111A20;--line:rgba(255,255,255,.11);--hover:rgba(255,255,255,.05);
-  --ink:#ECEFF1;--soft:#C5CDD2;--muted:#9DA9B0;--label:#6CC7CF;--accent-soft:rgba(146,66,159,.26);--accent-text:#E5BCEC;--code-text:#9FE0E8}
-[data-theme="night"] .side{background:#05272C;border-right:1px solid rgba(93,147,154,.3)}
-[data-theme="night"] .side .nl.on{background:#92429F;color:#FFFFFF;border-left-color:#E2B5EA}
-[data-theme="night"] .side .nl.on .ic{color:#FFFFFF}
-[data-theme="night"] .side .nl.on .ct{color:#FFFFFF;border-color:rgba(255,255,255,.5)}
-[data-theme="night"] .doc{background:#1B262E;color:#E8ECEE}
-[data-theme="night"] .d-box{fill:#1F2C35}
-[data-theme="night"] .tbl tr.bad td{background:rgba(255,148,138,.12)}
 :root[data-theme="light"]{--bg:#F5F7F8;--surface:#FFFFFF;--sunk:#EEF2F4;--line:#DCE3E7;--ink:#111B22;--soft:#344550;--muted:#56646D;--label:#0D5E68;--code-text:#0D5E68}
 [data-theme="light"] .side{background:#E7EFF0;border-right:1px solid #D3E1E3}
 [data-theme="light"] .side .nl.on{background:#92429F;color:#FFFFFF;border-left-color:#5B1F73}
@@ -633,13 +602,15 @@ h1,h2{color:var(--ink)}
 .leak .leak-today{margin:10px 0 0;color:var(--soft)}
 .leak .leak-cost{margin:12px 0 14px!important;font-size:16px!important}
 .leak .bar{margin-top:auto}
-.facts-line{color:var(--muted);font-size:14px;margin:-4px 0 8px}
+/* Menu and work area: a wider gap and a lavender divider down the work area's left edge. */
+@media (min-width:861px){.app{gap:28px;grid-template-columns:232px minmax(0,1fr)}main{border-left:1px solid #D9DCF7;padding-left:44px;min-height:70vh}}
+.facts-line{max-width:none!important;color:var(--muted);font-size:14px;margin:-4px 0 8px}
 </style>
 
 <header class="band">
   <div class="band-in">
     <div class="brand"><b>Afterink</b><span>Catch the deadlines and overcharges hidden in your signed contracts</span></div>
-    <div class="topr"><span>Demo date <span class="mono" id="demo-date"></span></span><button class="chip mute aichip" id="ai-chip" data-act="ai-log" title="Show every AI call made in this session">AI: checking</button><button class="btn sm ghost" data-act="theme-toggle" id="theme-btn" aria-pressed="false">Light mode</button><button class="btn sm light" data-act="tour-start" id="tour-btn">Guided tour</button><button class="btn sm ghost" data-act="reset-ask" id="reset-btn">Reset demo</button></div>
+    <div class="topr"><button class="chip mute aichip" id="ai-chip" data-act="ai-log" title="Show every AI call made in this session">AI: checking</button><button class="btn sm light" data-act="tour-start" id="tour-btn">Guided tour</button><button class="btn sm ghost" data-act="reset-ask" id="reset-btn">Reset demo</button></div>
     <div class="confirm" id="reset-confirm" role="dialog" aria-label="Reset demo" hidden><p>Restore the demo to its starting state? Anything you filed, decided or disputed is cleared.</p><div class="bar"><button class="btn sm pri" data-act="reset" id="reset-yes">Reset</button><button class="btn sm" data-act="reset-cancel">Cancel</button></div></div>
   </div>
 </header>

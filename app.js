@@ -451,7 +451,7 @@
       return `<span class="glowpill">Afterink &#183; AI contract repository</span>
       <h1>Afterink catches the deadlines and overcharges hidden in signed contracts.</h1>
       <p class="lede">Afterink reads signed contracts with AI and puts every deadline and price in front of the team that must act on it.</p>
-      <p class="facts-line">Live demo on a sample company, Kestrel Mobility. Nothing is ever sent.</p>
+      <p class="facts-line">Live demo on a sample company, Kestrel Mobility, dated ${fmtDate(DEMO_TODAY)}. Nothing is ever sent.</p>
 
       <h2>Three ways money leaks out of signed contracts</h2>
       <div class="leaks">
@@ -1178,23 +1178,12 @@
   }
   /* Light and dark: Night is the default. The top-bar button switches, and this viewer's choice is
      remembered in their browser. The page sets the mode before it first paints (see index.html). */
-  function themeButton() {
-    const light = document.documentElement.dataset.theme === 'light', b = $('#theme-btn');
-    if (b) { b.innerHTML = light ? icon('moon') + 'Dark mode' : icon('sun') + 'Light mode'; b.setAttribute('aria-pressed', String(light)); }
+  function headerIcons() {
     const tb = $('#tour-btn'), rb = $('#reset-btn');
     if (tb && !tb.querySelector('svg')) tb.insertAdjacentHTML('afterbegin', icon('play'));
     if (rb && !rb.querySelector('svg')) rb.insertAdjacentHTML('afterbegin', icon('reset'));
   }
-  Object.assign(ACT, {
-    'theme-toggle'() {
-      const next = document.documentElement.dataset.theme === 'light' ? 'night' : 'light';
-      document.documentElement.dataset.theme = next;
-      try { localStorage.setItem('afterink.theme', next); } catch (e) { /* storage unavailable: the choice lasts this page load */ }
-      themeButton();
-    },
-  });
-  themeButton();
-  $('#demo-date').textContent = fmtDate(DEMO_TODAY);
+  headerIcons();
   render();
   introInit();
   initAI();
