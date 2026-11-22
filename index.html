@@ -601,6 +601,12 @@ h1,h2{color:var(--ink)}
 .leak .bar{margin-top:auto}
 /* Menu and work area: a wider gap and a lavender divider down the work area's left edge. */
 @media (min-width:861px){.app{gap:28px;grid-template-columns:232px minmax(0,1fr)}main{border-left:1px solid #D9DCF7;padding-left:44px;min-height:70vh}}
+/* Selected toggles (Repository filters, renewal choices): Sirion's "current" look, lavender with an indigo edge. */
+[data-theme="light"] .segb{background:#FFFFFF;border:1px solid #D9DCF7;color:var(--ink)}
+[data-theme="light"] .segb:hover{border-color:var(--indigo)}
+[data-theme="light"] .segb.on{background:var(--lav);border-color:var(--indigo);color:var(--ink);font-weight:600}
+[data-theme="light"] .stack>span:nth-child(2){background:#5C63B2;color:#FFFFFF}
+[data-theme="light"] .toast{background:#FFFFFF;color:var(--ink);border:1px solid #D9DCF7;box-shadow:0 8px 24px rgba(11,24,33,.12)}
 .facts-line{max-width:none!important;color:var(--muted);font-size:14px;margin:-4px 0 8px}
 </style>
 
